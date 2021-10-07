@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UniRx;
 
 public class Point : MonoBehaviour
 {
@@ -20,11 +21,17 @@ public class Point : MonoBehaviour
         gameObject.name = "p" + pos;
         Text.text = pos;
 
-        var cameraPosition = Camera.main.transform.position;
-        Vector3 dir = Text.transform.position - cameraPosition;
-        Text.transform.rotation = Quaternion.LookRotation(dir);
+        Camera.main.transform
+            .ObserveEveryValueChanged(t => t.position)
+            .Subscribe(AlignTextToView);
 
-        //var distanceToCamera = Vector3.Distance(transform.position, cameraPosition);
-        //print(distanceToCamera);
+        var camPos = Camera.main.transform.position;
+        AlignTextToView(camPos);
+    }
+
+    void AlignTextToView(Vector3 camPos)
+    {
+        Vector3 dir = Text.transform.position - camPos;
+        Text.transform.rotation = Quaternion.LookRotation(dir);
     }
 }

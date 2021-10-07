@@ -105,7 +105,7 @@ public class Grid : MonoBehaviour
         _emptyGameObject = new GameObject();
         _emptyGameObject.transform.SetParent(transform);
         _emptyGameObject.name = "_backgroundMover";
-        _emptyGameObject.transform.position = Vector3.zero;
+        _emptyGameObject.transform.position = new Vector2(0.25f, 0.25f);
     }
 
     void MoveBackground()
@@ -119,7 +119,7 @@ public class Grid : MonoBehaviour
         {
             _toPos = Vector2.zero;
         }
-        _backgroundTweenId = LeanTween.move(_emptyGameObject, _toPos, 1020f).id;
+        _backgroundTweenId = LeanTween.move(_emptyGameObject, _toPos, 500f).id;
         LeanTween.descr(_backgroundTweenId.Value).setEase(LeanTweenType.linear);
         LeanTween.descr(_backgroundTweenId.Value).setOnUpdate((Vector2 newPos) =>
         {
