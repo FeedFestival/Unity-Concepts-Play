@@ -14,5 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PointPrefab: {fileID: 8706395905142701886, guid: 2a458aedf43525341a1dc7582b8ca479,
     type: 3}
+  GridLinePrefab: {fileID: 6730884121909805704, guid: 7f3b381763e018a4b8d0ec96460cc7a6,
+    type: 3}
   LinePrefab: {fileID: 945777710238283991, guid: e21140034a2bdf843b9baf0be56ec12b,
     type: 3}
+  LineSegmentLenght: 10

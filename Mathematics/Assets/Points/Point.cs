@@ -20,9 +20,11 @@ public class Point : MonoBehaviour
         gameObject.name = "p" + pos;
         Text.text = pos;
 
-        Vector3 dir = Text.transform.position - Camera.main.transform.position;
-
-        //Text.transform.LookAt(Text.transform, dir);
+        var cameraPosition = Camera.main.transform.position;
+        Vector3 dir = Text.transform.position - cameraPosition;
         Text.transform.rotation = Quaternion.LookRotation(dir);
+
+        //var distanceToCamera = Vector3.Distance(transform.position, cameraPosition);
+        //print(distanceToCamera);
     }
 }
