@@ -58,3 +58,11 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+/Mathematics/Library
+/Mathematics/Logs
+/Mathematics/Temp
+/Mathematics/UserSettings
+/Mathematics/Assets/TextMesh Pro
+/Mathematics/ProjectSettings
+/Mathematics/obj
+*.meta
