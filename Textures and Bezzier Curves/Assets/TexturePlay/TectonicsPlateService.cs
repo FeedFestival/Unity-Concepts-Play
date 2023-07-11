@@ -1,5 +1,6 @@
 using Game.Shared.Classes;
 using Game.Shared.Enums;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -63,17 +64,12 @@ namespace TexturePlay
         {
             switch (edge)
             {
-                case VoronoiEdge.Top:
-                    return new Vector2Int(coord.x, 0);
                 case VoronoiEdge.Right:
                     return new Vector2Int(0, coord.y);
                 case VoronoiEdge.InnerRight:
                     return new Vector2Int(1, coord.y);
                 case VoronoiEdge.MiddleRight:
                     return new Vector2Int(2, coord.y);
-                case VoronoiEdge.MiddleTop:
-                    return new Vector2Int(coord.x, 2);
-                case VoronoiEdge.InnerTop:
                 default:
                     return new Vector2Int(coord.x, 1);
             }
@@ -84,8 +80,6 @@ namespace TexturePlay
             Vector2Int point;
             switch (edge)
             {
-                case VoronoiEdge.Top:
-                    return new Vector2Int(oppositePoint.imagePosition.x, (sidePoint.gridPosition.y + cellSize.y) - oppositePoint.imagePosition.y);
                 case VoronoiEdge.Right:
                     return new Vector2Int(
                         (sidePoint.gridPosition.x + cellSize.x) - oppositePoint.imagePosition.x,
@@ -103,13 +97,6 @@ namespace TexturePlay
                         (sidePoint.gridPosition.x + cellSize.x) - (point.x - sidePoint.gridPosition.x),
                         point.y
                     );
-                case VoronoiEdge.MiddleTop:
-                    point = new Vector2Int(oppositePoint.imagePosition.x, (sidePoint.gridPosition.y + oppositePoint.imagePosition.y) - (cellSize.y * 2));
-                    return new Vector2Int(
-                        point.x,
-                        (sidePoint.gridPosition.y + cellSize.y) - (point.y - sidePoint.gridPosition.y)
-                    );
-                case VoronoiEdge.InnerTop:
                 default:
                     point = new Vector2Int(oppositePoint.imagePosition.x, (sidePoint.gridPosition.y + oppositePoint.imagePosition.y) - cellSize.y);
                     return new Vector2Int(
@@ -119,14 +106,67 @@ namespace TexturePlay
             }
         }
 
-        private static bool IsHiddenPixel(VoronoiEdge edge)
+        internal static void SetPointOnEdge(Vector2Int gridSize, ref Point point)
         {
-            return edge == VoronoiEdge.Left
-                || edge == VoronoiEdge.Top
-                || edge == VoronoiEdge.Bottom
-                //|| edge == VoronoiEdge.Right
-                ;
+            if (point.gridCoord.x == 0)
+            {
+                point.edge = VoronoiEdge.Left;
+                point.hasDeadPixels = true;
+            }
+            else if (point.gridCoord.x == gridSize.x - 1)
+            {
+                point.edge = VoronoiEdge.Right;
+            }
+            else if (point.gridCoord.y == gridSize.y - 1)
+            {
+                point.edge = VoronoiEdge.Middle;
+            }
+            else if (point.gridCoord.y == 0)
+            {
+                point.edge = VoronoiEdge.Middle;
+            }
+            else
+            {
+                if (point.gridCoord.x == 1)
+                {
+                    point.edge = VoronoiEdge.InnerLeft;
+                }
+                else if (point.gridCoord.x == gridSize.x - 2)
+                {
+                    point.edge = VoronoiEdge.InnerRight;
+                }
+                else if (point.gridCoord.y == gridSize.y - 2)
+                {
+                    point.edge = VoronoiEdge.Middle;
+                }
+                else if (point.gridCoord.y == 1)
+                {
+                    point.edge = VoronoiEdge.Middle;
+                }
+                else
+                {
+                    if (point.gridCoord.x == 2)
+                    {
+                        point.edge = VoronoiEdge.MiddleLeft;
+                    }
+                    else if (point.gridCoord.x == gridSize.x - 3)
+                    {
+                        point.edge = VoronoiEdge.MiddleRight;
+                    }
+                    else if (point.gridCoord.y == gridSize.y - 3)
+                    {
+                        point.edge = VoronoiEdge.Middle;
+                    }
+                    else if (point.gridCoord.y == 2)
+                    {
+                        point.edge = VoronoiEdge.Middle;
+                    }
+                    else
+                    {
+                        point.edge = VoronoiEdge.Middle;
+                    }
+                }
+            }
         }
-
     }
 }

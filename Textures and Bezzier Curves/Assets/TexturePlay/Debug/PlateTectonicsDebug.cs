@@ -21,15 +21,12 @@ namespace TexturePlay
         internal void showDebugPoints(Dictionary<VoronoiEdge, List<Point>> edgesPoints)
         {
             showDebugPoints(edgesPoints[VoronoiEdge.Left], _texturePlayDebugSettings.OuterEdgePoint);
-            showDebugPoints(edgesPoints[VoronoiEdge.Bottom], _texturePlayDebugSettings.OuterEdgePoint);
             showDebugPoints(edgesPoints[VoronoiEdge.InnerLeft], _texturePlayDebugSettings.MiddlePoint, 0.65f);
-            showDebugPoints(edgesPoints[VoronoiEdge.InnerBottom], _texturePlayDebugSettings.MiddlePoint, 0.65f);
             foreach (var kvp in edgesPoints)
             {
                 showDebugGridPoints(kvp.Value, _texturePlayDebugSettings.GridPoint);
             }
             showDebugPoints(edgesPoints[VoronoiEdge.Right], _texturePlayDebugSettings.OuterEdgePoint);
-            showDebugPoints(edgesPoints[VoronoiEdge.Top], _texturePlayDebugSettings.OuterEdgePoint);
             showDebugPoints(edgesPoints[VoronoiEdge.InnerRight], _texturePlayDebugSettings.MiddlePoint, 0.65f);
             showDebugPoints(edgesPoints[VoronoiEdge.Middle], _texturePlayDebugSettings.MiddlePoint, 0.5f);
         }
@@ -42,7 +39,6 @@ namespace TexturePlay
                 go.name = point.edge.ToString() + " (" + point.index + ")" + point.gridCoord.x + " _ " + point.gridCoord.y;
                 go.transform.SetParent(_pointsTransform);
                 go.transform.localScale = Vector3.one * scaleMultiplier;
-                //go.transform.position = point.worldPosition;
                 var rendererRef = go.GetComponent<MeshRenderer>();
                 rendererRef.material = material;
             }
@@ -56,7 +52,6 @@ namespace TexturePlay
                 go.name = "(" + point.index + ")" + point.gridCoord.x + " _ " + point.gridCoord.y;
                 go.transform.SetParent(_gridPointsTransform);
                 go.transform.localScale = Vector3.one * 0.4f;
-                //go.transform.position = point.gridWorldPosition;
                 var rendererRef = go.GetComponent<MeshRenderer>();
                 rendererRef.material = material;
             }
@@ -68,7 +63,6 @@ namespace TexturePlay
             go.name = edge + " (" + point.index + ")" + point.gridCoord.x + " _ " + point.gridCoord.y;
             go.transform.SetParent(_movedPointsTransform);
             go.transform.localScale = Vector3.one * 0.4f;
-            //go.transform.position = point.worldPosition;
             var rendererRef = go.GetComponent<MeshRenderer>();
             rendererRef.material = material;
         }

@@ -4,8 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using Game.Shared.Enums;
 using Game.Shared.Classes;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace TexturePlay
 {
@@ -82,33 +80,25 @@ namespace TexturePlay
             buildImage();
         }
 
-        private void Update()
-        {
-            if (Input.GetKeyUp(KeyCode.Space))
-            {
-
-            }
-        }
-
         private void buildImage()
         {
-            var points = buildPoints(gridSize: _gridProvinceSize);
+            var points = buildPoints(imgSize: _imgSize, gridSize: _gridProvinceSize);
             drawTexture(_imgSize, _gridProvinceSize, ref points, _provinceImage);
 
-            var regionPoints = buildPoints(gridSize: _gridRegionSize, blackAndWhiteColor: false);
+            var regionPoints = buildPoints(imgSize: _imgSize, gridSize: _gridRegionSize, blackAndWhiteColor: false);
             colorSmallerPointsWithBiggerPoints(bgSizePoints: regionPoints, gridBgSize: _gridRegionSize, gridSmSize: _gridProvinceSize, smSizePoints: ref points);
             drawTexture(_imgSize, _gridProvinceSize, ref points, _regionsImage);
 
-            var continentPoints = buildPoints(gridSize: _gridContinentSize, blackAndWhiteColor: false);
+            var continentPoints = buildPoints(imgSize: _imgSize, gridSize: _gridContinentSize, blackAndWhiteColor: false);
             colorSmallerPointsWithBiggerPoints(bgSizePoints: continentPoints, gridBgSize: _gridContinentSize, gridSmSize: _gridRegionSize, smSizePoints: ref regionPoints, modifyPixels: false);
             colorSmallerPointsWithBiggerPoints(bgSizePoints: regionPoints, gridBgSize: _gridRegionSize, gridSmSize: _gridProvinceSize, smSizePoints: ref points);
             drawTexture(_imgSize, _gridProvinceSize, ref points, _continentsImage);
         }
 
-        private Dictionary<int, Dictionary<int, Point>> buildPoints(Vector2Int gridSize, bool blackAndWhiteColor = true)
+        private Dictionary<int, Dictionary<int, Point>> buildPoints(Vector2Int imgSize, Vector2Int gridSize, bool blackAndWhiteColor = true)
         {
-            var cellSize = new Vector2Int(_imgSize.x / gridSize.x, _imgSize.y / gridSize.y);
-            var points = getSeamlessPoints(_imgSize, cellSize, gridSize, blackAndWhiteColor);
+            var cellSize = new Vector2Int(imgSize.x / gridSize.x, imgSize.y / gridSize.y);
+            var points = getSeamlessPoints(imgSize, cellSize, gridSize, blackAndWhiteColor);
             return points;
         }
 
@@ -116,15 +106,10 @@ namespace TexturePlay
         {
             var points = generatePoints(gridSize, cellSize, blackAndWhiteColor);
 
-            // --- make the voronoi texture seamless
-
             var edgesPoints = points.GetEdgesPoints();
             modifySideEdge(cellSize, VoronoiEdge.Right, ref edgesPoints, ref points);
-            //modifySideEdge(cellSize, VoronoiEdge.Top, ref edgesPoints, ref points);
             modifySideEdge(cellSize, VoronoiEdge.InnerRight, ref edgesPoints, ref points);
-            //modifySideEdge(cellSize, VoronoiEdge.InnerTop, ref edgesPoints, ref points);
             modifySideEdge(cellSize, VoronoiEdge.MiddleRight, ref edgesPoints, ref points);
-            //modifySideEdge(cellSize, VoronoiEdge.MiddleTop, ref edgesPoints, ref points);
 
             TectonicsPlateService.AssignPixelsAndColor(imgSize, gridSize, cellSize, ref points);
 
@@ -196,44 +181,12 @@ namespace TexturePlay
             }
         }
 
-        private void drawPreviewTexture(Vector2Int imgSize, Vector2Int gridSize, ref Dictionary<int, Dictionary<int, Point>> points, RawImage pointsPreviewImage)
-        {
-            var previewTexture = new Texture2D(imgSize.x, imgSize.y);
-            previewTexture.filterMode = FilterMode.Point;
-            generatePreview(imgSize, gridSize, ref points, ref previewTexture);
-            pointsPreviewImage.texture = previewTexture;
-        }
-
         private void drawTexture(Vector2Int imgSize, Vector2Int gridSize, ref Dictionary<int, Dictionary<int, Point>> points, RawImage rawImage)
         {
             var texture = new Texture2D(imgSize.x, imgSize.y);
             texture.filterMode = FilterMode.Point;
             paintPixels(gridSize, ref points, ref texture);
             rawImage.texture = texture;
-        }
-
-        private void previewPoints(Vector2Int gridSize, Dictionary<int, Dictionary<int, Point>> pointsPositions, ref Texture2D texture)
-        {
-            for (int x = 0; x < gridSize.x; x++)
-            {
-                for (int y = 0; y < gridSize.y; y++)
-                {
-                    texture.SetPixel(pointsPositions[x][y].imagePosition.x, pointsPositions[x][y].imagePosition.y, Color.black);
-                }
-            }
-            texture.Apply();
-        }
-
-        private void generatePreview(Vector2Int imgSize, Vector2Int gridSize, ref Dictionary<int, Dictionary<int, Point>> pointsPositions, ref Texture2D texture)
-        {
-            for (int x = 0; x < imgSize.x; x++)
-            {
-                for (int y = 0; y < imgSize.y; y++)
-                {
-                    texture.SetPixel(x, y, new Color(0, 0, 0, 0));
-                }
-            }
-            previewPoints(gridSize, pointsPositions, ref texture);
         }
 
         private void paintPixels(Vector2Int gridSize, ref Dictionary<int, Dictionary<int, Point>> points, ref Texture2D texture)
@@ -256,10 +209,7 @@ namespace TexturePlay
 
         private Dictionary<int, Dictionary<int, Point>> generatePoints(Vector2Int gridSize, Vector2Int cellSize, bool blackAndWhiteColor = true)
         {
-            var pointsCount = gridSize.x * gridSize.y;
-            var lastRowCount = pointsCount - gridSize.y;
             var points = new Dictionary<int, Dictionary<int, Point>>();
-            var lastGridPoint = Vector2Int.zero;
             int i = 0;
             for (int x = 0; x < gridSize.x; x++)
             {
@@ -272,89 +222,12 @@ namespace TexturePlay
                         cellSize,
                         color: blackAndWhiteColor ? GenerateRandomBlackAndWhiteColor() : GenerateRandomColor()
                     );
-
-                    var isLastPointTop = determineWhatEdgeOrMiddle(i, pointsCount, lastRowCount, gridSize, ref point);
-                    if (isLastPointTop)
-                    {
-                        var previousPoint = points[lastGridPoint.x][lastGridPoint.y];
-                        previousPoint.edge = VoronoiEdge.Top;
-                        points[lastGridPoint.x][lastGridPoint.y] = previousPoint;
-                    }
-
+                    TectonicsPlateService.SetPointOnEdge(gridSize, ref point);
                     points.AddPoint(point);
-
-                    // -> for next iteration
-                    lastGridPoint = point.gridCoord;
                     i++;
                 }
             }
             return points;
-        }
-
-        private bool determineWhatEdgeOrMiddle(int i, int pointsCount, int lastRowCount, Vector2Int gridSize, ref Point point)
-        {
-            if (point.gridCoord.x == 0)
-            {
-                point.edge = VoronoiEdge.Left;
-                point.hasDeadPixels = true;
-            }
-            else if (point.gridCoord.x == gridSize.x - 1)
-            {
-                point.edge = VoronoiEdge.Right;
-            }
-            else if (point.gridCoord.y == gridSize.y - 1)
-            {
-                point.edge = VoronoiEdge.Top;
-                point.hasDeadPixels = true;
-            }
-            else if (point.gridCoord.y == 0)
-            {
-                point.edge = VoronoiEdge.Bottom;
-                point.hasDeadPixels = true;
-            }
-            else
-            {
-                if (point.gridCoord.x == 1)
-                {
-                    point.edge = VoronoiEdge.InnerLeft;
-                }
-                else if (point.gridCoord.x == gridSize.x - 2)
-                {
-                    point.edge = VoronoiEdge.InnerRight;
-                }
-                else if (point.gridCoord.y == gridSize.y - 2)
-                {
-                    point.edge = VoronoiEdge.InnerTop;
-                }
-                else if (point.gridCoord.y == 1)
-                {
-                    point.edge = VoronoiEdge.InnerBottom;
-                }
-                else
-                {
-                    if (point.gridCoord.x == 2)
-                    {
-                        point.edge = VoronoiEdge.MiddleLeft;
-                    }
-                    else if (point.gridCoord.x == gridSize.x - 3)
-                    {
-                        point.edge = VoronoiEdge.MiddleRight;
-                    }
-                    else if (point.gridCoord.y == gridSize.y - 3)
-                    {
-                        point.edge = VoronoiEdge.MiddleTop;
-                    }
-                    else if (point.gridCoord.y == 2)
-                    {
-                        point.edge = VoronoiEdge.MiddleBottom;
-                    }
-                    else
-                    {
-                        point.edge = VoronoiEdge.Middle;
-                    }
-                }
-            }
-            return false;
         }
 
         public static Color GenerateRandomBlackAndWhiteColor()
