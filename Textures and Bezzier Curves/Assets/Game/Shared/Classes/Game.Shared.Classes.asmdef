@@ -1,9 +1,7 @@
 {
-    "name": "TexturePlay",
+    "name": "Game.Shared.Classes",
     "rootNamespace": "",
     "references": [
-        "GUID:eb2de5b8fdbfa0a45827260f16fc1fa0",
-        "GUID:f1e52bd97f949944ebe59ed3822f6568",
         "GUID:6c4910c36ad333542b8a3d654a3abf3f"
     ],
     "includePlatforms": [],

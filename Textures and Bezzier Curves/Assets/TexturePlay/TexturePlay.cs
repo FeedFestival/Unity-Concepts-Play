@@ -2,6 +2,10 @@ using Game.Shared.PropertyDrawers;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Game.Shared.Enums;
+using Game.Shared.Classes;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace TexturePlay
 {
@@ -13,16 +17,29 @@ namespace TexturePlay
         private Vector2Int _imgSize;
         [SerializeField]
         [ReadOnly]
+        private Vector2Int _gridProvinceSize;
+        [SerializeField]
+        [ReadOnly]
         private Vector2Int _gridRegionSize;
         [SerializeField]
         [ReadOnly]
         private Vector2Int _gridContinentSize;
         [SerializeField]
+        private int _provinceDivider = 40;
+        [SerializeField]
         private int _regionDivider = 100;
         [SerializeField]
-        private int _regionSliceMultiplier = 1;
+        private int _continentDivider = 6;
         [SerializeField]
-        private int _continentDivider = 10;
+        private int _sizeMultiplierDivider = 1;
+        [SerializeField]
+        private TextAsset _pointsTextAsset;
+        [SerializeField]
+        private TextAsset _continentPointsTextAsset;
+
+        [Header("Regions")]
+        [SerializeField]
+        private RawImage _provinceImage;
 
         [Header("Regions")]
         [SerializeField]
@@ -44,12 +61,16 @@ namespace TexturePlay
         void Start()
         {
             _imgSize = SIZE / SIZE_RESOLUTION_DIVIDER;
-            _gridRegionSize = (SIZE / _regionDivider) / _regionSliceMultiplier;
-            _gridContinentSize = _gridRegionSize / _continentDivider;
+            _gridProvinceSize = (SIZE / _provinceDivider) / _sizeMultiplierDivider;
+            _gridRegionSize = (_gridProvinceSize / _regionDivider) / _sizeMultiplierDivider;
+            _gridContinentSize = (_gridRegionSize / _continentDivider) / _sizeMultiplierDivider;
 
-            Debug.Log("_gridSize: " + _gridRegionSize.ToString());
+            Random.InitState(1);
 
-            var rt = _regionsImage.GetComponent<RectTransform>();
+            var rt = _provinceImage.GetComponent<RectTransform>();
+            rt.sizeDelta = _imgSize;
+
+            rt = _regionsImage.GetComponent<RectTransform>();
             rt.sizeDelta = _imgSize;
 
             //
@@ -65,57 +86,33 @@ namespace TexturePlay
         {
             if (Input.GetKeyUp(KeyCode.Space))
             {
-                buildImage();
+
             }
         }
 
         private void buildImage()
         {
-            var cellSize = new Vector2Int(_imgSize.x / _gridRegionSize.x, _imgSize.y / _gridRegionSize.y);
-            Debug.Log("cellSize: " + cellSize);
-            var points = getSeamlessPoints(cellSize, _gridRegionSize);
+            var points = buildPoints(gridSize: _gridProvinceSize);
+            drawTexture(_imgSize, _gridProvinceSize, ref points, _provinceImage);
 
-            drawTexture(_imgSize, _gridRegionSize, cellSize, ref points, _regionsImage);
+            var regionPoints = buildPoints(gridSize: _gridRegionSize, blackAndWhiteColor: false);
+            colorSmallerPointsWithBiggerPoints(bgSizePoints: regionPoints, gridBgSize: _gridRegionSize, gridSmSize: _gridProvinceSize, smSizePoints: ref points);
+            drawTexture(_imgSize, _gridProvinceSize, ref points, _regionsImage);
 
-            //var relaxedPoints = TectonicsPlateService.ApplyLloydRelaxation(_imgSize, cellSize, points, 2);
-
-            var continentCellSize = new Vector2Int(_imgSize.x / _gridContinentSize.x, _imgSize.y / _gridContinentSize.y);
-            Debug.Log("continentCellSize: " + continentCellSize);
-            var continentPoints = getSeamlessPoints(continentCellSize, _gridContinentSize, blackAndWhiteColor: false);
-            var continentRegionPoints = new Dictionary<int, Dictionary<int, Point>>();
-
-            for (int x = 0; x < _gridRegionSize.x; x++)
-            {
-                for (int y = 0; y < _gridRegionSize.y; y++)
-                {
-                    float nearestDistance = Mathf.Infinity;  // Initialize the minimum distance with infinity.
-                    Vector2Int nearestPoint = new Vector2Int();  // Initialize the closest point.
-
-                    for (int cx = 0; cx < _gridContinentSize.x; cx++)
-                    {
-                        for (int cy = 0; cy < _gridContinentSize.y; cy++)
-                        {
-                            float distance = Vector2Int.Distance(points[x][y].imagePosition, continentPoints[cx][cy].imagePosition);  // Calculate the distance between the current pixel and the point in the neighboring cell.
-                            if (distance < nearestDistance)  // If the calculated distance is less than the current minimum distance.
-                            {
-                                nearestDistance = distance;  // Update the minimum distance.
-                                nearestPoint = continentPoints[cx][cy].gridCoord;  // Update the nearest point.
-                            }
-                        }
-                    }
-
-                    var newPoint = new Point(points[x][y], continentPoints[nearestPoint.x][nearestPoint.y].color);
-
-                    continentRegionPoints.AddPoint(newPoint);
-                }
-            }
-
-            drawTexture(_imgSize, _gridContinentSize, continentCellSize, ref continentPoints, null, _continentsPointsPreviewImage);
-
-            drawTexture(_imgSize, _gridRegionSize, cellSize, ref continentRegionPoints, _continentsImage);
+            var continentPoints = buildPoints(gridSize: _gridContinentSize, blackAndWhiteColor: false);
+            colorSmallerPointsWithBiggerPoints(bgSizePoints: continentPoints, gridBgSize: _gridContinentSize, gridSmSize: _gridRegionSize, smSizePoints: ref regionPoints, modifyPixels: false);
+            colorSmallerPointsWithBiggerPoints(bgSizePoints: regionPoints, gridBgSize: _gridRegionSize, gridSmSize: _gridProvinceSize, smSizePoints: ref points);
+            drawTexture(_imgSize, _gridProvinceSize, ref points, _continentsImage);
         }
 
-        private Dictionary<int, Dictionary<int, Point>> getSeamlessPoints(Vector2Int cellSize, Vector2Int gridSize, bool blackAndWhiteColor = true)
+        private Dictionary<int, Dictionary<int, Point>> buildPoints(Vector2Int gridSize, bool blackAndWhiteColor = true)
+        {
+            var cellSize = new Vector2Int(_imgSize.x / gridSize.x, _imgSize.y / gridSize.y);
+            var points = getSeamlessPoints(_imgSize, cellSize, gridSize, blackAndWhiteColor);
+            return points;
+        }
+
+        private Dictionary<int, Dictionary<int, Point>> getSeamlessPoints(Vector2Int imgSize, Vector2Int cellSize, Vector2Int gridSize, bool blackAndWhiteColor = true)
         {
             var points = generatePoints(gridSize, cellSize, blackAndWhiteColor);
 
@@ -123,15 +120,59 @@ namespace TexturePlay
 
             var edgesPoints = points.GetEdgesPoints();
             modifySideEdge(cellSize, VoronoiEdge.Right, ref edgesPoints, ref points);
-            modifySideEdge(cellSize, VoronoiEdge.Top, ref edgesPoints, ref points);
+            //modifySideEdge(cellSize, VoronoiEdge.Top, ref edgesPoints, ref points);
             modifySideEdge(cellSize, VoronoiEdge.InnerRight, ref edgesPoints, ref points);
-            modifySideEdge(cellSize, VoronoiEdge.InnerTop, ref edgesPoints, ref points);
+            //modifySideEdge(cellSize, VoronoiEdge.InnerTop, ref edgesPoints, ref points);
             modifySideEdge(cellSize, VoronoiEdge.MiddleRight, ref edgesPoints, ref points);
-            modifySideEdge(cellSize, VoronoiEdge.MiddleTop, ref edgesPoints, ref points);
+            //modifySideEdge(cellSize, VoronoiEdge.MiddleTop, ref edgesPoints, ref points);
+
+            TectonicsPlateService.AssignPixelsAndColor(imgSize, gridSize, cellSize, ref points);
 
             _plateTectonicsDebug?.showDebugPoints(edgesPoints);
 
             return points;
+        }
+
+        private void colorSmallerPointsWithBiggerPoints(
+            Dictionary<int, Dictionary<int, Point>> bgSizePoints,
+            Vector2Int gridBgSize,
+            Vector2Int gridSmSize,
+            ref Dictionary<int, Dictionary<int, Point>> smSizePoints,
+            bool modifyPixels = true
+        )
+        {
+            for (int x = 0; x < gridSmSize.x; x++)
+            {
+                for (int y = 0; y < gridSmSize.y; y++)
+                {
+                    float nearestDistance = Mathf.Infinity;  // Initialize the minimum distance with infinity.
+                    var nearestPoint = new Vector2Int();  // Initialize the closest point.
+
+                    for (int bx = 0; bx < gridBgSize.x; bx++)
+                    {
+                        for (int by = 0; by < gridBgSize.y; by++)
+                        {
+                            float distance = Vector2Int.Distance(smSizePoints[x][y].imagePosition, bgSizePoints[bx][by].imagePosition);  // Calculate the distance between the current pixel and the point in the neighboring cell.
+                            if (distance < nearestDistance)  // If the calculated distance is less than the current minimum distance.
+                            {
+                                nearestDistance = distance;  // Update the minimum distance.
+                                nearestPoint = bgSizePoints[bx][by].gridCoord;  // Update the nearest point.
+                            }
+                        }
+                    }
+
+                    smSizePoints[x][y].color = bgSizePoints[nearestPoint.x][nearestPoint.y].color;
+
+                    if (smSizePoints[x][y].hasDeadPixels)
+                    {
+                        TectonicsPlateService.ModifyAllPixels(ref smSizePoints[x][y].pixels, Color.black);
+                    }
+
+                    if (modifyPixels == false) { continue; }
+
+                    TectonicsPlateService.ModifyAllPixels(ref smSizePoints[x][y].pixels, bgSizePoints[nearestPoint.x][nearestPoint.y].color);
+                }
+            }
         }
 
         private void modifySideEdge(Vector2Int cellSize, VoronoiEdge edge, ref Dictionary<VoronoiEdge, List<Point>> toModifyEdge, ref Dictionary<int, Dictionary<int, Point>> points)
@@ -139,23 +180,13 @@ namespace TexturePlay
             var modified = new List<Vector2Int>();
             foreach (var sidePoint in toModifyEdge[edge])
             {
-                var oppositeCoord = getVoronoiEdgeOppositeCoord(edge, sidePoint.gridCoord);
+                var oppositeCoord = TectonicsPlateService.GetVoronoiEdgeOppositeCoord(edge, sidePoint.gridCoord);
                 var oppositePoint = points[oppositeCoord.x][oppositeCoord.y];
-                var imagePos = getVoronoiEdgeNewImagePos(edge, oppositePoint, sidePoint, cellSize);
+                var imagePos = TectonicsPlateService.GetVoronoiEdgeNewImagePos(edge, oppositePoint, sidePoint, cellSize);
 
-                var newRightPoint = new Point(
-                    sidePoint.index,
-                    sidePoint.gridCoord,
-                    imagePos,
-                    cellSize,
-                    oppositePoint.color,
-                    sidePoint.edge
-                );
+                sidePoint.updatePoint(imagePos, cellSize, oppositePoint.color);
 
-                //showDebugMovedPoint(edge, newRightPoint, _texturePlayDebugSettings.InnerEdgePoint);
-
-                points[sidePoint.gridCoord.x][sidePoint.gridCoord.y] = newRightPoint;
-                modified.Add(newRightPoint.gridCoord);
+                modified.Add(sidePoint.gridCoord);
             }
             int i = 0;
             foreach (var mod in modified)
@@ -165,85 +196,20 @@ namespace TexturePlay
             }
         }
 
-        private Vector2Int getVoronoiEdgeOppositeCoord(VoronoiEdge edge, Vector2Int coord)
+        private void drawPreviewTexture(Vector2Int imgSize, Vector2Int gridSize, ref Dictionary<int, Dictionary<int, Point>> points, RawImage pointsPreviewImage)
         {
-            switch (edge)
-            {
-                case VoronoiEdge.Top:
-                    return new Vector2Int(coord.x, 0);
-                case VoronoiEdge.Right:
-                    return new Vector2Int(0, coord.y);
-                case VoronoiEdge.InnerRight:
-                    return new Vector2Int(1, coord.y);
-                case VoronoiEdge.MiddleRight:
-                    return new Vector2Int(2, coord.y);
-                case VoronoiEdge.MiddleTop:
-                    return new Vector2Int(coord.x, 2);
-                case VoronoiEdge.InnerTop:
-                default:
-                    return new Vector2Int(coord.x, 1);
-            }
+            var previewTexture = new Texture2D(imgSize.x, imgSize.y);
+            previewTexture.filterMode = FilterMode.Point;
+            generatePreview(imgSize, gridSize, ref points, ref previewTexture);
+            pointsPreviewImage.texture = previewTexture;
         }
 
-        private Vector2Int getVoronoiEdgeNewImagePos(VoronoiEdge edge, Point oppositePoint, Point sidePoint, Vector2Int cellSize)
+        private void drawTexture(Vector2Int imgSize, Vector2Int gridSize, ref Dictionary<int, Dictionary<int, Point>> points, RawImage rawImage)
         {
-            Vector2Int point;
-            switch (edge)
-            {
-                case VoronoiEdge.Top:
-                    return new Vector2Int(oppositePoint.imagePosition.x, (sidePoint.gridPosition.y + cellSize.y) - oppositePoint.imagePosition.y);
-                case VoronoiEdge.Right:
-                    return new Vector2Int(
-                        (sidePoint.gridPosition.x + cellSize.x) - oppositePoint.imagePosition.x,
-                        oppositePoint.imagePosition.y
-                    );
-                case VoronoiEdge.InnerRight:
-                    point = new Vector2Int((sidePoint.gridPosition.x + oppositePoint.imagePosition.x) - cellSize.x, oppositePoint.imagePosition.y);
-                    return new Vector2Int(
-                        (sidePoint.gridPosition.x + cellSize.x) - (point.x - sidePoint.gridPosition.x),
-                        point.y
-                    );
-                case VoronoiEdge.MiddleRight:
-                    point = new Vector2Int((sidePoint.gridPosition.x + oppositePoint.imagePosition.x) - (cellSize.x * 2), oppositePoint.imagePosition.y);
-                    return new Vector2Int(
-                        (sidePoint.gridPosition.x + cellSize.x) - (point.x - sidePoint.gridPosition.x),
-                        point.y
-                    );
-                case VoronoiEdge.MiddleTop:
-                    point = new Vector2Int(oppositePoint.imagePosition.x, (sidePoint.gridPosition.y + oppositePoint.imagePosition.y) - (cellSize.y * 2));
-                    return new Vector2Int(
-                        point.x,
-                        (sidePoint.gridPosition.y + cellSize.y) - (point.y - sidePoint.gridPosition.y)
-                    );
-                case VoronoiEdge.InnerTop:
-                default:
-                    point = new Vector2Int(oppositePoint.imagePosition.x, (sidePoint.gridPosition.y + oppositePoint.imagePosition.y) - cellSize.y);
-                    return new Vector2Int(
-                        point.x,
-                        (sidePoint.gridPosition.y + cellSize.y) - (point.y - sidePoint.gridPosition.y)
-                    );
-            }
-        }
-
-        private void drawTexture(Vector2Int imgSize, Vector2Int gridSize, Vector2Int cellSize, ref Dictionary<int, Dictionary<int, Point>> points, RawImage rawImage = null, RawImage pointsPreviewImage = null)
-        {
-            if (pointsPreviewImage != null)
-            {
-                var previewTexture = new Texture2D(imgSize.x, imgSize.y);
-                previewTexture.filterMode = FilterMode.Point;
-                generatePreview(imgSize, gridSize, ref points, ref previewTexture);
-                pointsPreviewImage.texture = previewTexture;
-            }
-
-            // --- draw texture voronoi
-
-            if (rawImage != null)
-            {
-                var texture = new Texture2D(imgSize.x, imgSize.y);
-                texture.filterMode = FilterMode.Point;
-                generateDiagram(imgSize, gridSize, cellSize, ref points, ref texture);
-                rawImage.texture = texture;
-            }
+            var texture = new Texture2D(imgSize.x, imgSize.y);
+            texture.filterMode = FilterMode.Point;
+            paintPixels(gridSize, ref points, ref texture);
+            rawImage.texture = texture;
         }
 
         private void previewPoints(Vector2Int gridSize, Dictionary<int, Dictionary<int, Point>> pointsPositions, ref Texture2D texture)
@@ -270,41 +236,19 @@ namespace TexturePlay
             previewPoints(gridSize, pointsPositions, ref texture);
         }
 
-        private void generateDiagram(Vector2Int imgSize, Vector2Int gridSize, Vector2Int cellSize, ref Dictionary<int, Dictionary<int, Point>> points, ref Texture2D texture)
+        private void paintPixels(Vector2Int gridSize, ref Dictionary<int, Dictionary<int, Point>> points, ref Texture2D texture)
         {
-            for (int x = 0; x < imgSize.x; x++)  // Iterate over the width of the image.
+            for (int x = 0; x < gridSize.x; x++)
             {
-                for (int y = 0; y < imgSize.y; y++)  // Iterate over the height of the image.
+                for (int y = 0; y < gridSize.y; y++)
                 {
-                    int gridX = x / cellSize.x;  // Determine the grid cell's Y index that contains the current pixel.
-                    int gridY = y / cellSize.y;  // Determine the grid cell's X index that contains the current pixel.
-
-                    float nearestDistance = Mathf.Infinity;  // Initialize the minimum distance with infinity.
-                    Vector2Int nearestPoint = new Vector2Int();  // Initialize the closest point.
-
-                    for (int a = -1; a < 2; a++)  // Iterate over the neighboring cells in X direction.
+                    foreach (var pixelCols in points[x][y].pixels)
                     {
-                        for (int b = -1; b < 2; b++)  // Iterate over the neighboring cells in Y direction.
+                        foreach (var pixel in pixelCols.Value)
                         {
-                            int X = gridX + a;  // Calculate the X index of the neighboring cell.
-                            int Y = gridY + b;  // Calculate the Y index of the neighboring cell.
-                            if (X < 0 || Y < 0 || X >= gridSize.x || Y >= gridSize.y) continue;  // Skip if the neighbor cell is out of the grid bounds.
-
-                            float distance = Vector2Int.Distance(new Vector2Int(x, y), points[X][Y].imagePosition);  // Calculate the distance between the current pixel and the point in the neighboring cell.
-                            if (distance < nearestDistance)  // If the calculated distance is less than the current minimum distance.
-                            {
-                                nearestDistance = distance;  // Update the minimum distance.
-                                nearestPoint = new Vector2Int(X, Y);  // Update the nearest point.
-                            }
+                            texture.SetPixel(pixel.Value.coord.x, pixel.Value.coord.y, pixel.Value.color);
                         }
                     }
-
-                    var shouldBeHidden = points[nearestPoint.x][nearestPoint.y].edge == VoronoiEdge.Left
-                        || points[nearestPoint.x][nearestPoint.y].edge == VoronoiEdge.Top
-                        || points[nearestPoint.x][nearestPoint.y].edge == VoronoiEdge.Bottom
-                        || points[nearestPoint.x][nearestPoint.y].edge == VoronoiEdge.Right;
-                    var color = shouldBeHidden ? Color.black : points[nearestPoint.x][nearestPoint.y].color;
-                    texture.SetPixel(x, y, color);  // Set the color of the current pixel to the color of the closest point.
                 }
             }
             texture.Apply();
@@ -349,19 +293,25 @@ namespace TexturePlay
 
         private bool determineWhatEdgeOrMiddle(int i, int pointsCount, int lastRowCount, Vector2Int gridSize, ref Point point)
         {
-            if (i == 0) // first point
-                point.edge = VoronoiEdge.Bottom;
-            else if (i < gridSize.y) // left side
+            if (point.gridCoord.x == 0)
+            {
                 point.edge = VoronoiEdge.Left;
-            else if (i % gridSize.y == 0) // first in column
+                point.hasDeadPixels = true;
+            }
+            else if (point.gridCoord.x == gridSize.x - 1)
+            {
+                point.edge = VoronoiEdge.Right;
+            }
+            else if (point.gridCoord.y == gridSize.y - 1)
+            {
+                point.edge = VoronoiEdge.Top;
+                point.hasDeadPixels = true;
+            }
+            else if (point.gridCoord.y == 0)
             {
                 point.edge = VoronoiEdge.Bottom;
-                return true;
+                point.hasDeadPixels = true;
             }
-            else if (i == pointsCount - 1) // last point
-                point.edge = VoronoiEdge.Top;
-            else if (i > lastRowCount) // right side
-                point.edge = VoronoiEdge.Right;
             else
             {
                 if (point.gridCoord.x == 1)
@@ -404,7 +354,6 @@ namespace TexturePlay
                     }
                 }
             }
-
             return false;
         }
 

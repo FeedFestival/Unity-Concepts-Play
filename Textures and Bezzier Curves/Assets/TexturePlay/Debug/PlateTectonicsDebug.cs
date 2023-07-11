@@ -1,5 +1,5 @@
-using System;
-using System.Collections;
+using Game.Shared.Classes;
+using Game.Shared.Enums;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -42,7 +42,7 @@ namespace TexturePlay
                 go.name = point.edge.ToString() + " (" + point.index + ")" + point.gridCoord.x + " _ " + point.gridCoord.y;
                 go.transform.SetParent(_pointsTransform);
                 go.transform.localScale = Vector3.one * scaleMultiplier;
-                go.transform.position = point.worldPosition;
+                //go.transform.position = point.worldPosition;
                 var rendererRef = go.GetComponent<MeshRenderer>();
                 rendererRef.material = material;
             }
@@ -56,7 +56,7 @@ namespace TexturePlay
                 go.name = "(" + point.index + ")" + point.gridCoord.x + " _ " + point.gridCoord.y;
                 go.transform.SetParent(_gridPointsTransform);
                 go.transform.localScale = Vector3.one * 0.4f;
-                go.transform.position = point.gridWorldPosition;
+                //go.transform.position = point.gridWorldPosition;
                 var rendererRef = go.GetComponent<MeshRenderer>();
                 rendererRef.material = material;
             }
@@ -68,7 +68,7 @@ namespace TexturePlay
             go.name = edge + " (" + point.index + ")" + point.gridCoord.x + " _ " + point.gridCoord.y;
             go.transform.SetParent(_movedPointsTransform);
             go.transform.localScale = Vector3.one * 0.4f;
-            go.transform.position = point.worldPosition;
+            //go.transform.position = point.worldPosition;
             var rendererRef = go.GetComponent<MeshRenderer>();
             rendererRef.material = material;
         }

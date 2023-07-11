@@ -1,168 +1,132 @@
+using Game.Shared.Classes;
+using Game.Shared.Enums;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace TexturePlay
 {
-    public class VoronoiCell
-    {
-        private List<Vector2Int> points = new List<Vector2Int>();
-
-        public void AddPoint(Vector2Int point)
-        {
-            points.Add(point);
-        }
-
-        public Vector2Int GetCentroid()
-        {
-            int totalX = 0;
-            int totalY = 0;
-
-            foreach (Vector2Int point in points)
-            {
-                totalX += point.x;
-                totalY += point.y;
-            }
-
-            return new Vector2Int(totalX / points.Count, totalY / points.Count);
-        }
-    }
-
     public static class TectonicsPlateService
     {
-        public static Dictionary<int, Dictionary<int, Point>> ApplyLloydRelaxation(Vector2Int imgSize, Vector2Int cellSize, Dictionary<int, Dictionary<int, Point>> pointsDictionary, int iterations)
+        internal static void AssignPixelsAndColor(Vector2Int imgSize, Vector2Int gridSize, Vector2Int cellSize, ref Dictionary<int, Dictionary<int, Point>> points)
         {
-            // Copy the input points to a new Dictionary which will be transformed by the algorithm
-            Dictionary<int, Dictionary<int, Point>> relaxedPoints = new Dictionary<int, Dictionary<int, Point>>(pointsDictionary);
-
-            // Create an array to hold the Voronoi cell data
-            VoronoiCell[,] cells = new VoronoiCell[imgSize.x, imgSize.y]; // Assume width and height are defined elsewhere
-
-            for (int iteration = 0; iteration < iterations; iteration++)
+            for (int x = 0; x < imgSize.x; x++)  // Iterate over the width of the image.
             {
-                // Make a deep copy of relaxedPoints for this iteration
-                var copiedRelaxedPoints = new Dictionary<int, Dictionary<int, Point>>(relaxedPoints.Count);
-                foreach (var pair in relaxedPoints)
+                for (int y = 0; y < imgSize.y; y++)  // Iterate over the height of the image.
                 {
-                    copiedRelaxedPoints[pair.Key] = new Dictionary<int, Point>(pair.Value);
-                }
+                    int gridX = x / cellSize.x;  // Determine the grid cell's Y index that contains the current pixel.
+                    int gridY = y / cellSize.y;  // Determine the grid cell's X index that contains the current pixel.
 
-                // Reset Voronoi cells
-                for (int x = 0; x < imgSize.x; x++)
-                {
-                    for (int y = 0; y < imgSize.y; y++)
+                    float nearestDistance = Mathf.Infinity;  // Initialize the minimum distance with infinity.
+                    var nearestPoint = new Vector2Int();  // Initialize the closest point.
+
+                    for (int a = -1; a < 2; a++)  // Iterate over the neighboring cells in X direction.
                     {
-                        cells[x, y] = new VoronoiCell();
-                    }
-                }
-
-                // For each point, determine which cell it belongs to and update the cell data
-                foreach (var outerDict in copiedRelaxedPoints)
-                {
-                    foreach (var pointPair in outerDict.Value)
-                    {
-                        var point = pointPair.Value;
-                        int closestCellX = point.gridPosition.x / cellSize.x; // Assuming cellSize is defined elsewhere
-                        int closestCellY = point.gridPosition.y / cellSize.y;
-
-                        cells[closestCellX, closestCellY].AddPoint(point.gridPosition);
-                    }
-                }
-
-                // Create a new dictionary to hold the modified points for this iteration
-                Dictionary<int, Dictionary<int, Point>> modifiedPoints = new Dictionary<int, Dictionary<int, Point>>();
-
-                // Update each point to be the centroid of its cell
-                foreach (var outerDict in copiedRelaxedPoints)
-                {
-                    foreach (var pointPair in outerDict.Value)
-                    {
-                        var point = pointPair.Value;
-                        Vector2Int cellPosition = new Vector2Int(point.gridPosition.x / cellSize.x, point.gridPosition.y / cellSize.y);
-                        Vector2Int newCentroid = cells[cellPosition.x, cellPosition.y].GetCentroid();
-
-                        var newPoint = new Point(
-                            point.index,
-                            point.gridCoord,
-                            newCentroid,
-                            cellSize,
-                            point.color,
-                            point.edge
-                        );
-
-                        // Add modified point to the copy
-                        if (!modifiedPoints.ContainsKey(outerDict.Key))
+                        for (int b = -1; b < 2; b++)  // Iterate over the neighboring cells in Y direction.
                         {
-                            modifiedPoints[outerDict.Key] = new Dictionary<int, Point>();
+                            int X = gridX + a;  // Calculate the X index of the neighboring cell.
+                            int Y = gridY + b;  // Calculate the Y index of the neighboring cell.
+                            if (X < 0 || Y < 0 || X >= gridSize.x || Y >= gridSize.y) continue;  // Skip if the neighbor cell is out of the grid bounds.
+
+                            float distance = Vector2Int.Distance(new Vector2Int(x, y), points[X][Y].imagePosition);  // Calculate the distance between the current pixel and the point in the neighboring cell.
+                            if (distance < nearestDistance)  // If the calculated distance is less than the current minimum distance.
+                            {
+                                nearestDistance = distance;  // Update the minimum distance.
+                                nearestPoint = new Vector2Int(X, Y);  // Update the nearest point.
+                            }
                         }
-                        modifiedPoints[outerDict.Key][pointPair.Key] = newPoint;
                     }
+
+                    var color = points[nearestPoint.x][nearestPoint.y].hasDeadPixels
+                        ? Color.black
+                        : points[nearestPoint.x][nearestPoint.y].color;
+
+                    var pixel = new Pixel(x, y, color);
+
+                    points[nearestPoint.x][nearestPoint.y].pixels.AddPixel(pixel);
                 }
-
-                // Replace the original points with the modified points
-                relaxedPoints = modifiedPoints;
             }
-
-            return relaxedPoints;
         }
 
-        //public static Dictionary<int, Dictionary<int, Point>> ApplyLloydRelaxation(Vector2Int imgSize, Vector2Int cellSize, Dictionary<int, Dictionary<int, Point>> pointsDictionary, int iterations)
-        //{
-        //    // Copy the input points to a new Dictionary which will be transformed by the algorithm
-        //    Dictionary<int, Dictionary<int, Point>> relaxedPoints = new Dictionary<int, Dictionary<int, Point>>(pointsDictionary);
+        internal static void ModifyAllPixels(ref Dictionary<int, Dictionary<int, Pixel>> pixels, Color color)
+        {
+            foreach (var pixelsCols in pixels)
+            {
+                foreach (var pixel in pixelsCols.Value)
+                {
+                    pixel.Value.color = color;
+                }
+            }
+        }
 
-        //    // Create an array to hold the Voronoi cell data
-        //    VoronoiCell[,] cells = new VoronoiCell[imgSize.x, imgSize.y]; // Assume width and height are defined elsewhere
+        internal static Vector2Int GetVoronoiEdgeOppositeCoord(VoronoiEdge edge, Vector2Int coord)
+        {
+            switch (edge)
+            {
+                case VoronoiEdge.Top:
+                    return new Vector2Int(coord.x, 0);
+                case VoronoiEdge.Right:
+                    return new Vector2Int(0, coord.y);
+                case VoronoiEdge.InnerRight:
+                    return new Vector2Int(1, coord.y);
+                case VoronoiEdge.MiddleRight:
+                    return new Vector2Int(2, coord.y);
+                case VoronoiEdge.MiddleTop:
+                    return new Vector2Int(coord.x, 2);
+                case VoronoiEdge.InnerTop:
+                default:
+                    return new Vector2Int(coord.x, 1);
+            }
+        }
 
-        //    for (int iteration = 0; iteration < iterations; iteration++)
-        //    {
-        //        // Reset Voronoi cells
-        //        for (int x = 0; x < imgSize.x; x++)
-        //        {
-        //            for (int y = 0; y < imgSize.y; y++)
-        //            {
-        //                cells[x, y] = new VoronoiCell();
-        //            }
-        //        }
+        internal static Vector2Int GetVoronoiEdgeNewImagePos(VoronoiEdge edge, Point oppositePoint, Point sidePoint, Vector2Int cellSize)
+        {
+            Vector2Int point;
+            switch (edge)
+            {
+                case VoronoiEdge.Top:
+                    return new Vector2Int(oppositePoint.imagePosition.x, (sidePoint.gridPosition.y + cellSize.y) - oppositePoint.imagePosition.y);
+                case VoronoiEdge.Right:
+                    return new Vector2Int(
+                        (sidePoint.gridPosition.x + cellSize.x) - oppositePoint.imagePosition.x,
+                        oppositePoint.imagePosition.y
+                    );
+                case VoronoiEdge.InnerRight:
+                    point = new Vector2Int((sidePoint.gridPosition.x + oppositePoint.imagePosition.x) - cellSize.x, oppositePoint.imagePosition.y);
+                    return new Vector2Int(
+                        (sidePoint.gridPosition.x + cellSize.x) - (point.x - sidePoint.gridPosition.x),
+                        point.y
+                    );
+                case VoronoiEdge.MiddleRight:
+                    point = new Vector2Int((sidePoint.gridPosition.x + oppositePoint.imagePosition.x) - (cellSize.x * 2), oppositePoint.imagePosition.y);
+                    return new Vector2Int(
+                        (sidePoint.gridPosition.x + cellSize.x) - (point.x - sidePoint.gridPosition.x),
+                        point.y
+                    );
+                case VoronoiEdge.MiddleTop:
+                    point = new Vector2Int(oppositePoint.imagePosition.x, (sidePoint.gridPosition.y + oppositePoint.imagePosition.y) - (cellSize.y * 2));
+                    return new Vector2Int(
+                        point.x,
+                        (sidePoint.gridPosition.y + cellSize.y) - (point.y - sidePoint.gridPosition.y)
+                    );
+                case VoronoiEdge.InnerTop:
+                default:
+                    point = new Vector2Int(oppositePoint.imagePosition.x, (sidePoint.gridPosition.y + oppositePoint.imagePosition.y) - cellSize.y);
+                    return new Vector2Int(
+                        point.x,
+                        (sidePoint.gridPosition.y + cellSize.y) - (point.y - sidePoint.gridPosition.y)
+                    );
+            }
+        }
 
-        //        // For each point, determine which cell it belongs to and update the cell data
-        //        foreach (var outerDict in relaxedPoints)
-        //        {
-        //            foreach (var pointPair in outerDict.Value)
-        //            {
-        //                var point = pointPair.Value;
-        //                int closestCellX = point.gridPosition.x / cellSize.x; // Assuming cellSize is defined elsewhere
-        //                int closestCellY = point.gridPosition.y / cellSize.y;
+        private static bool IsHiddenPixel(VoronoiEdge edge)
+        {
+            return edge == VoronoiEdge.Left
+                || edge == VoronoiEdge.Top
+                || edge == VoronoiEdge.Bottom
+                //|| edge == VoronoiEdge.Right
+                ;
+        }
 
-        //                cells[closestCellX, closestCellY].AddPoint(point.gridPosition);
-        //            }
-        //        }
-
-        //        // Update each point to be the centroid of its cell
-        //        foreach (var outerDict in relaxedPoints)
-        //        {
-        //            foreach (var pointPair in outerDict.Value)
-        //            {
-        //                var point = pointPair.Value;
-        //                Vector2Int cellPosition = new Vector2Int(point.gridPosition.x / cellSize.x, point.gridPosition.y / cellSize.y);
-        //                Vector2Int newCentroid = cells[cellPosition.x, cellPosition.y].GetCentroid();
-
-        //                var newPoint = new Point(
-        //                    point.index,
-        //                    point.gridCoord,
-        //                    newCentroid,
-        //                    cellSize,
-        //                    point.color,
-        //                    point.edge
-        //                );
-
-        //                // Modify the point directly in the dictionary
-        //                outerDict.Value[pointPair.Key] = newPoint;  // Assuming that Point has a constructor that accepts a Vector2Int and a type.
-        //            }
-        //        }
-        //    }
-
-        //    return relaxedPoints;
-        //}
     }
 }

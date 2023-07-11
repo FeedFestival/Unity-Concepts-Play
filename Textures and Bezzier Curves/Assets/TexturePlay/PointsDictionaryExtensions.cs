@@ -1,13 +1,10 @@
+using Game.Shared.Classes;
+using Game.Shared.Enums;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace TexturePlay
 {
-    public enum VoronoiEdge
-    {
-        Left, Top, Bottom, Middle, Right, InnerLeft, InnerRight, InnerBottom, InnerTop, MiddleLeft, MiddleRight, MiddleTop, MiddleBottom
-    }
-
     public static class PointsDictionaryExtensions
     {
         public static Dictionary<VoronoiEdge, List<Point>> GetEdgesPoints(this Dictionary<int, Dictionary<int, Point>> dictionary)
@@ -64,6 +61,28 @@ namespace TexturePlay
                 dictionary.Add(key1, new Dictionary<int, Point>());
             }
             dictionary[key1].Add(key2, value);
+        }
+
+        public static void AddPixel(this Dictionary<int, Dictionary<int, Pixel>> dictionary, Pixel value)
+        {
+            if (!dictionary.ContainsKey(value.coord.x))
+            {
+                dictionary.Add(value.coord.x, new Dictionary<int, Pixel>());
+            }
+            dictionary[value.coord.x].Add(value.coord.y, value);
+        }
+
+        public static bool ContainsPixel(this Dictionary<int, Dictionary<int, Pixel>> dictionary, Pixel value)
+        {
+            if (dictionary.ContainsKey(value.coord.x))
+            {
+                if (dictionary[value.coord.x].ContainsKey(value.coord.y))
+                {
+                    return true;
+                }
+                return false;
+            }
+            return false;
         }
     }
 }

@@ -2,62 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace TexturePlay
+namespace Game.Shared.Classes
 {
-    public struct Point
-    {
-        internal int index;
-        public Vector2Int gridCoord;
-        public Vector2Int gridPosition;
-        public Vector2Int imagePosition;
-        public Vector3 gridWorldPosition;
-        public Vector3 worldPosition;
-        internal VoronoiEdge edge;
-        internal Color color;
-
-        public Point(int i, Vector2Int gridCoord, Vector2Int imagePos, Vector2Int cellSize, Color color)
-        {
-            index = i;
-            this.gridCoord = gridCoord;
-            gridPosition = new Vector2Int(this.gridCoord.x * cellSize.x, this.gridCoord.y * cellSize.y);
-            imagePosition = imagePos;
-
-            gridWorldPosition = new Vector3(gridPosition.x, 0, gridPosition.y) * 0.1f;
-            worldPosition = new Vector3(imagePosition.x, 0, imagePosition.y) * 0.1f;
-
-            this.color = color;
-            edge = VoronoiEdge.Middle;
-        }
-
-        public Point(int i, Vector2Int gridCoord, Vector2Int imagePos, Vector2Int cellSize, Color color, VoronoiEdge voronoiEdge)
-        {
-            index = i;
-            this.gridCoord = gridCoord;
-            gridPosition = new Vector2Int(gridCoord.x * cellSize.x, gridCoord.y * cellSize.y);
-            imagePosition = imagePos;
-
-            gridWorldPosition = new Vector3(gridPosition.x, 0, gridPosition.y) * 0.1f;
-            worldPosition = new Vector3(imagePosition.x, 0, imagePosition.y) * 0.1f;
-
-            this.color = color;
-            edge = voronoiEdge;
-        }
-
-        public Point(Point point, Color color)
-        {
-            index = point.index;
-            gridCoord = point.gridCoord;
-            gridPosition = point.gridPosition;
-            imagePosition = point.imagePosition;
-
-            gridWorldPosition = point.gridWorldPosition;
-            worldPosition = point.worldPosition;
-
-            this.color = color;
-            edge = point.edge;
-        }
-    }
-
     public struct ColorHSV
     {
         public float h;
