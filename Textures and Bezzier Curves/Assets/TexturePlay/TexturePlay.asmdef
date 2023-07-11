@@ -1,0 +1,16 @@
+{
+    "name": "TexturePlay",
+    "rootNamespace": "",
+    "references": [
+        "GUID:eb2de5b8fdbfa0a45827260f16fc1fa0"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
