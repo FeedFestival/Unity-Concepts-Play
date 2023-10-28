@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd4f7ae48eef52e4fafeeff1d9ac43e5, type: 3}
   m_Name: TexturePlayDebugSettings
   m_EditorClassIdentifier: 
+  Square: {fileID: 4428145381041766216, guid: b2d65d675064bc54e879439e22e74d7a, type: 3}
   InnerEdgePoint: {fileID: 2100000, guid: 2c3a7769f1fe45949b8096704f19d6fd, type: 2}
   OuterEdgePoint: {fileID: 2100000, guid: deaf6e2b233cae446be83f7f36d31f74, type: 2}
   MiddlePoint: {fileID: 2100000, guid: 9c00846d0585272438b01454001263ae, type: 2}

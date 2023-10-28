@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace TexturePlay
@@ -7,6 +5,8 @@ namespace TexturePlay
     [CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/TexturePlayDebugSettings", order = 1)]
     public class TexturePlayDebug : ScriptableObject
     {
+        public GameObject Square;
+
         [Header("DebugColors")]
         public Material InnerEdgePoint;
         public Material OuterEdgePoint;

@@ -58,7 +58,7 @@ namespace TexturePlay
         private PlateTectonicsDebug _plateTectonicsDebug;
 
         private readonly Vector2Int SIZE = new Vector2Int(7680, 3840);
-        private readonly int SIZE_RESOLUTION_DIVIDER = 10;
+        private readonly int SIZE_RESOLUTION_DIVIDER = 5;  // 10
 
         private Subject<int> _buildProvinces__s = new Subject<int>();
         private readonly System.TimeSpan _timeSpanTimeout = System.TimeSpan.FromMilliseconds(100);
@@ -79,28 +79,131 @@ namespace TexturePlay
 
             Random.InitState(1);
 
+            var textureSize = Vector3.one * 1.245f;
             var rt = _provinceImage.GetComponent<RectTransform>();
             rt.sizeDelta = _imgSize;
+            rt.localScale = textureSize;
 
             rt = _regionsImage.GetComponent<RectTransform>();
             rt.sizeDelta = _imgSize;
+            rt.localScale = textureSize;
 
             //
             rt = _continentsImage.GetComponent<RectTransform>();
             rt.sizeDelta = _imgSize;
+            rt.localScale = textureSize;
 
             rt = _testSquareImage.GetComponent<RectTransform>();
             rt.sizeDelta = _imgSize;
+            rt.localScale = textureSize;
 
             initSubjects();
+        }
+
+        struct TectonicPlate
+        {
+            public int direction;
+            public float height;
+            public List<Vector2Int> plates;
         }
 
         private void Start()
         {
             //_buildProvinces__s.OnNext(0);
 
+            var tectonicsList = new List<Vector2Int>();
+            for (int x = 0; x < _gridContinentSize.x; x++)
+            {
+                for (int y = 0; y < _gridContinentSize.y; y++)
+                {
+                    tectonicsList.Add(new Vector2Int(x, y));
+                }
+            }
 
-            _buildTectonicPlates__s.OnNext(0);
+            int continentSize = 9;
+            int minContinentSize = 3;
+            var tectonicsLength = tectonicsList.Count - (_gridContinentSize.y * 2);
+            Debug.Log("tectonicsLength: " + tectonicsLength);
+            var tectonicsSizes = new List<int>();
+            while (tectonicsLength > 0)
+            {
+                int newLength = tectonicsLength - continentSize;
+                if (newLength < 0)
+                {
+                    continentSize = newLength;
+                }
+
+                tectonicsSizes.Add(continentSize);
+                tectonicsLength = newLength;
+
+                //var shouldWeAddItAgain = Mathf.RoundToInt(Random.Range(0, 100)) >= 50;
+                //if (shouldWeAddItAgain)
+                //{
+                //    continentSize++;
+                //}
+
+                continentSize--;
+                if (continentSize < minContinentSize)
+                {
+                    continentSize = minContinentSize;
+                }
+            }
+
+            var tectonicsPlate = new List<TectonicPlate>();
+            for (int i = 0; i < tectonicsSizes.Count; i++)
+            {
+                Debug.Log("tectonicsSizes: " + tectonicsSizes[i]);
+
+                int randomIndex = Mathf.FloorToInt(Random.Range(_gridContinentSize.y + 1, tectonicsList.Count - _gridContinentSize.y + 1));
+                var randomTectonic = tectonicsList[randomIndex];
+                tectonicsList.RemoveAt(randomIndex);
+                Debug.Log("randomTectonic: " + randomTectonic);
+
+                var x = randomTectonic.x;
+                var y = randomTectonic.y;
+                var possibleNeighbors = new List<Vector2Int>() {
+                    new Vector2Int(-1, 0),
+                    new Vector2Int(-1, 1),
+                    new Vector2Int(0, 1),
+                    new Vector2Int(1, 1),
+                    new Vector2Int(1, 0),
+                    new Vector2Int(1, -1),
+                    new Vector2Int(0, -1),
+                    new Vector2Int(-1, -1),
+                };
+                for (int t = 0; t < tectonicsSizes[i]; t++)
+                {
+                    // find an available neighbor to add
+                    var rIndex = Mathf.FloorToInt(Random.Range(0, possibleNeighbors.Count));
+                    var randomNeighborCoord = randomTectonic + possibleNeighbors[rIndex];
+                    Debug.Log("randomNeighborCoord: " + randomNeighborCoord);
+                    var isAvailable = tectonicsList.Find(tct => tct == randomNeighborCoord);
+                    Debug.Log("isAvailable: " + isAvailable);
+
+                    //Debug.Log("neighborIndex: [" + x + "][" + y + "]");
+
+                }
+
+                var tectonicPlate = new TectonicPlate()
+                {
+                    height = 1,
+                    direction = 1,
+                    plates = new List<Vector2Int>() { tectonicsList[i] }
+                };
+            }
+
+            
+
+
+
+            // THIS IS HOW WE DO IT !!!
+            //_buildTectonicPlates__s.OnNext(0);
+
+
+
+
+
+
 
 
             //_points = buildPoints(imgSize: _imgSize, gridSize: _gridProvinceSize);
@@ -118,80 +221,57 @@ namespace TexturePlay
                 .Do(_ =>
                 {
                     var continentPoints = buildContinentPoints(imgSize: _imgSize, gridSize: _gridContinentSize);
-                    var continentCellSize = new Vector2Int(_imgSize.x / _gridContinentSize.x, _imgSize.y / _gridContinentSize.y);
                     var regionPoints = buildRegionPoints(imgSize: _imgSize, gridSize: _gridRegionSize);
-                    //var regionCellSize = new Vector2Int(_imgSize.x / _gridRegionSize.x, _imgSize.y / _gridRegionSize.y);
 
-                    foreach (var xKvp in regionPoints)
-                    {
-                        foreach (var yKvp in xKvp.Value)
-                        {
-                            var point = yKvp.Value;
+                    var continentCellSize = new Vector2Int(_imgSize.x / _gridContinentSize.x, _imgSize.y / _gridContinentSize.y);
+                    assignRegionsToContinents(continentCellSize, _gridContinentSize, regionPoints, ref continentPoints);
 
-                            var pX = Mathf.FloorToInt(point.gridPosition.x / continentCellSize.x);
-                            var pY = Mathf.FloorToInt(point.gridPosition.y / continentCellSize.y);
-
-                            float nearestDistance = Mathf.Infinity;  // Initialize the minimum distance with infinity.
-                            var nearestPoint = new Vector2Int();  // Initialize the closest point.
-
-                            // check left and right of the parent too ses who is nearest to the current point
-                            for (int bx = pX - 1; bx < pX + 1; bx++)
-                            {
-                                for (int by = pY - 1; by < pY + 1; by++)
-                                {
-                                    if (bx < 0 || by < 0 || bx >= _gridContinentSize.x || by >= _gridContinentSize.y) continue;  // Skip if the neighbor cell is out of the grid bounds.
-
-                                    float distance = Vector2Int.Distance(point.imagePosition, continentPoints[bx][by].imagePosition);  // Calculate the distance between the current pixel and the point in the neighboring cell.
-                                    if (distance < nearestDistance)  // If the calculated distance is less than the current minimum distance.
-                                    {
-                                        nearestDistance = distance;  // Update the minimum distance.
-                                        nearestPoint = continentPoints[bx][by].gridCoord;  // Update the nearest point.
-                                    }
-                                }
-                            }
-
-                            continentPoints[nearestPoint.x][nearestPoint.y].SubPoints.AddPoint(point);
-                        }
-                    }
-
-
+                    var points = buildPoints(imgSize: _imgSize, gridSize: _gridProvinceSize);
+                    var regionCellSize = new Vector2Int(_imgSize.x / _gridRegionSize.x, _imgSize.y / _gridRegionSize.y);
+                    assignPointsToRegions(regionCellSize, _gridRegionSize, points, ref regionPoints);
 
                     var regionsTexture = new Texture2D(_imgSize.x, _imgSize.y);
                     regionsTexture.filterMode = FilterMode.Point;
+
+
 
                     foreach (var cxKvp in continentPoints)
                     {
                         foreach (var cyKvp in cxKvp.Value)
                         {
-                            // --------------
-                            var continentPoint = cyKvp.Value as IContinentPoint;
-                            //var continentPoint = continentPoints[2][3];
-
+                            var continentPoint = cyKvp.Value;
                             continentPoint.gradientSquarePixelCoords
                                 = TectonicsPlateService.GetGradientSquarePixelCoords(continentPoint);
                             var bottomLeft = continentPoint.gradientSquarePixelCoords[0];
                             var topRight = continentPoint.gradientSquarePixelCoords[1];
                             var size = new Vector2Int(topRight.x - bottomLeft.x, topRight.y - bottomLeft.y);
-                            var gradient = _gradientSettings.GetGradientTexture(continentPoint.PlateMovementDirection);
-                            var offset = new Vector2((float)(gradient.width / size.x), (float)(gradient.height / size.y));
+                            var gradientTexture = _gradientSettings.GetGradientTexture(continentPoint.PlateMovementDirection);
 
-                            foreach (var rxKvp in continentPoint.SubPoints)
+                            var perPixel = new Vector2((float)gradientTexture.width / (float)size.x, (float)gradientTexture.height / (float)size.y);
+
+                            foreach (var rxKvp in continentPoint.RegionPoints)
                             {
                                 foreach (var ryKvp in rxKvp.Value)
                                 {
-                                    //-----------------
                                     var regionPoint = ryKvp.Value;
-                                    foreach (var pxxKvp in regionPoint.pixels)
+                                    foreach (var pxKvp in regionPoint.Points)
                                     {
-                                        foreach (var pxyKvp in pxxKvp.Value)
+                                        foreach (var pyKvp in pxKvp.Value)
                                         {
-                                            var pixel = pxyKvp.Value;
+                                            var point = pyKvp.Value;
+                                            var gradientPos = point.imagePosition - bottomLeft;
+                                            var pixelPos = new Vector2Int(Mathf.FloorToInt(gradientPos.x * perPixel.x), Mathf.FloorToInt(gradientPos.y * perPixel.y));
+                                            ColorHSV color = gradientTexture.GetPixel(pixelPos.x, pixelPos.y);
+                                            color.v = color.v * continentPoint.Elevation;
 
-                                            var gradientPos = pixel.coord - bottomLeft;
-                                            var pixelPos = new Vector2Int(Mathf.FloorToInt(gradientPos.x * offset.x), Mathf.FloorToInt(gradientPos.y * offset.y));
-                                            var color = gradient.GetPixel(pixelPos.x, pixelPos.y);
-
-                                            regionsTexture.SetPixel(pixel.coord.x, pixel.coord.y, color);
+                                            foreach (var pxxKvp in point.pixels)
+                                            {
+                                                foreach (var pxyKvp in pxxKvp.Value)
+                                                {
+                                                    var pixel = pxyKvp.Value;
+                                                    regionsTexture.SetPixel(pixel.coord.x, pixel.coord.y, color);
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -202,6 +282,20 @@ namespace TexturePlay
                     regionsTexture.Apply();
                     _regionsImage.gameObject.SetActive(true);
                     _regionsImage.texture = regionsTexture;
+
+                    //var testTexture = TectonicsPlateService.AverageOutTexture(_regionsImage.texture as Texture2D, neighborDepth: 4);
+                    //testTexture.filterMode = FilterMode.Point;
+                    //_testSquareImage.gameObject.SetActive(true);
+                    //_testSquareImage.texture = testTexture;
+
+                    //testTexture = TectonicsPlateService.EqualizeGrayscale(regionsTexture); // lighten up
+
+                    //var testTexture = TectonicsPlateService.ApplyGaussianBlur(_regionsImage.texture as Texture2D);
+                    //testTexture = TectonicsPlateService.ApplyGaussianBlur(testTexture);
+
+                    //testTexture.filterMode = FilterMode.Point;
+                    //_testSquareImage.gameObject.SetActive(true);
+                    //_testSquareImage.texture = testTexture;
                 })
                 .Subscribe();
 
@@ -302,7 +396,7 @@ namespace TexturePlay
             var cellSize = new Vector2Int(imgSize.x / gridSize.x, imgSize.y / gridSize.y);
             var continentPoints = generateContinentPoints(gridSize, cellSize);// as Dictionary<int, Dictionary<int, IContinentPoint>>;
 
-             var edgesPoints = continentPoints.GetEdgesPoints();
+            var edgesPoints = continentPoints.GetEdgesPoints();
             modifyContinentSideEdge(cellSize, VoronoiEdge.Right, ref edgesPoints, ref continentPoints);
             modifyContinentSideEdge(cellSize, VoronoiEdge.InnerRight, ref edgesPoints, ref continentPoints);
             modifyContinentSideEdge(cellSize, VoronoiEdge.MiddleRight, ref edgesPoints, ref continentPoints);
@@ -320,17 +414,84 @@ namespace TexturePlay
             modifyRegionSideEdge(cellSize, VoronoiEdge.InnerRight, ref edgesPoints, ref regionPoints);
             modifyRegionSideEdge(cellSize, VoronoiEdge.MiddleRight, ref edgesPoints, ref regionPoints);
 
-            TectonicsPlateService.AssignPixelsAndColor(imgSize, gridSize, cellSize, ref regionPoints);
             return regionPoints;
         }
 
+        private void assignRegionsToContinents(Vector2Int continentCellSize, Vector2Int gridContinentSize, Dictionary<int, Dictionary<int, IRegionPoint>> regionPoints, ref Dictionary<int, Dictionary<int, IContinentPoint>> continentPoints)
+        {
+            foreach (var xKvp in regionPoints)
+            {
+                foreach (var yKvp in xKvp.Value)
+                {
+                    var point = yKvp.Value;
+
+                    var pX = Mathf.FloorToInt(point.gridPosition.x / continentCellSize.x);
+                    var pY = Mathf.FloorToInt(point.gridPosition.y / continentCellSize.y);
+
+                    float nearestDistance = Mathf.Infinity;  // Initialize the minimum distance with infinity.
+                    var nearestPoint = new Vector2Int();  // Initialize the closest point.
+
+                    // check left and right of the parent too ses who is nearest to the current point
+                    for (int bx = pX - 1; bx < pX + 1; bx++)
+                    {
+                        for (int by = pY - 1; by < pY + 1; by++)
+                        {
+                            if (bx < 0 || by < 0 || bx >= gridContinentSize.x || by >= gridContinentSize.y) continue;  // Skip if the neighbor cell is out of the grid bounds.
+
+                            float distance = Vector2Int.Distance(point.imagePosition, continentPoints[bx][by].imagePosition);  // Calculate the distance between the current pixel and the point in the neighboring cell.
+                            if (distance < nearestDistance)  // If the calculated distance is less than the current minimum distance.
+                            {
+                                nearestDistance = distance;  // Update the minimum distance.
+                                nearestPoint = continentPoints[bx][by].gridCoord;  // Update the nearest point.
+                            }
+                        }
+                    }
+                    continentPoints[nearestPoint.x][nearestPoint.y].RegionPoints.AddPoint(point);
+                }
+            }
+        }
+
+        private void assignPointsToRegions(Vector2Int regionCellSize, Vector2Int gridRegionSize, Dictionary<int, Dictionary<int, IPoint>> points, ref Dictionary<int, Dictionary<int, IRegionPoint>> regionPoints)
+        {
+            foreach (var xKvp in points)
+            {
+                foreach (var yKvp in xKvp.Value)
+                {
+                    var point = yKvp.Value;
+
+                    var pX = Mathf.FloorToInt(point.gridPosition.x / regionCellSize.x);
+                    var pY = Mathf.FloorToInt(point.gridPosition.y / regionCellSize.y);
+
+                    float nearestDistance = Mathf.Infinity;  // Initialize the minimum distance with infinity.
+                    var nearestPoint = new Vector2Int();  // Initialize the closest point.
+
+                    // check left and right of the parent too ses who is nearest to the current point
+                    for (int bx = pX - 1; bx < pX + 1; bx++)
+                    {
+                        for (int by = pY - 1; by < pY + 1; by++)
+                        {
+                            if (bx < 0 || by < 0 || bx >= gridRegionSize.x || by >= gridRegionSize.y) continue;  // Skip if the neighbor cell is out of the grid bounds.
+
+                            float distance = Vector2Int.Distance(point.imagePosition, regionPoints[bx][by].imagePosition);  // Calculate the distance between the current pixel and the point in the neighboring cell.
+                            if (distance < nearestDistance)  // If the calculated distance is less than the current minimum distance.
+                            {
+                                nearestDistance = distance;  // Update the minimum distance.
+                                nearestPoint = regionPoints[bx][by].gridCoord;  // Update the nearest point.
+                            }
+                        }
+                    }
+                    regionPoints[nearestPoint.x][nearestPoint.y].Points.AddPoint(point);
+                }
+            }
+        }
+
         private void colorSmallerPointsWithBiggerPoints(
-            Dictionary<int, Dictionary<int, IPoint>> bgSizePoints,
-            Vector2Int gridBgSize,
-            Vector2Int gridSmSize,
-            ref Dictionary<int, Dictionary<int, IPoint>> smSizePoints,
-            bool modifyPixels = true
-        )
+        Dictionary<int, Dictionary<int, IPoint>> bgSizePoints,
+        Vector2Int gridBgSize,
+        Vector2Int gridSmSize,
+        ref Dictionary<int, Dictionary<int, IPoint>> smSizePoints,
+        bool modifyPixels = true
+    )
         {
             for (int x = 0; x < gridSmSize.x; x++)
             {
@@ -474,7 +635,8 @@ namespace TexturePlay
                         gridCoord: new Vector2Int(x, y),
                         imagePos: new Vector2Int(x * cellSize.x + Random.Range(0, cellSize.x), y * cellSize.y + Random.Range(0, cellSize.y)),
                         cellSize,
-                        plateMovementDirection: TectonicsPlateService.GetRandomDegrees()
+                        plateMovementDirection: TectonicsPlateService.GetRandomDegrees(),
+                        elevation: TectonicsPlateService.GetRandomTectonicElevation()
                     );
                     TectonicsPlateService.SetPointOnEdge(gridSize, ref point);
                     points.AddPoint(point as IContinentPoint);
@@ -506,7 +668,7 @@ namespace TexturePlay
             }
             return points;
         }
-        
+
         private Dictionary<int, Dictionary<int, IRegionPoint>> generateRegionPoints(Vector2Int gridSize, Vector2Int cellSize)
         {
             var points = new Dictionary<int, Dictionary<int, IRegionPoint>>();

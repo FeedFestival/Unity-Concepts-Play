@@ -11,12 +11,12 @@ namespace TexturePlay
         {
             var voronoiEdges = new Dictionary<VoronoiEdge, List<T>>()
             {
-                { VoronoiEdge.Left, new List<T>() },
+                //{ VoronoiEdge.Left, new List<T>() },
                 { VoronoiEdge.Middle, new List<T>() },
                 { VoronoiEdge.Right, new List<T>() },
-                { VoronoiEdge.InnerLeft, new List<T>() },
+                //{ VoronoiEdge.InnerLeft, new List<T>() },
                 { VoronoiEdge.InnerRight, new List<T>() },
-                { VoronoiEdge.MiddleLeft, new List<T>() },
+                //{ VoronoiEdge.MiddleLeft, new List<T>() },
                 { VoronoiEdge.MiddleRight, new List<T>() }
             };
             for (int x = 0; x < dictionary.Count; x++)

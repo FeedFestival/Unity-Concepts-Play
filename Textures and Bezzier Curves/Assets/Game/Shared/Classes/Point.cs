@@ -23,31 +23,31 @@ namespace Game.Shared.Classes
 
     public interface IContinentPoint : IPointBase
     {
+        float Elevation { get; set; }
         int PlateMovementDirection { get; set; }
         Vector2Int[] gradientSquarePixelCoords { get; set; }
-        Dictionary<int, Dictionary<int, IRegionPoint>> SubPoints { get; set; }
+        Dictionary<int, Dictionary<int, IRegionPoint>> RegionPoints { get; set; }
 
         void updatePoint(Vector2Px imagePos, Vector2Px cellSize, int plateMovementDirection);
     }
 
     public interface IRegionPoint : IPointBase
     {
-        public Color color { get; set; }
-        public Dictionary<int, Dictionary<int, Pixel>> pixels { get; set; }
-        //---------------
+        Dictionary<int, Dictionary<int, IPoint>> Points { get; set; }
 
         void updatePoint(Vector2Px imagePos, Vector2Px cellSize);
     }
 
     public class ContinentPoint : PointBase, IPointBase, IContinentPoint
     {
+        public float Elevation { get; set; }
         public int PlateMovementDirection { get; set; }
         public Vector2Int[] gradientSquarePixelCoords { get; set; }
-        public Dictionary<int, Dictionary<int, IRegionPoint>> SubPoints { get; set; }
+        public Dictionary<int, Dictionary<int, IRegionPoint>> RegionPoints { get; set; }
 
         public ContinentPoint() { }
 
-        public ContinentPoint(int i, Vector2Px gridCoord, Vector2Px imagePos, Vector2Px cellSize, int plateMovementDirection)
+        public ContinentPoint(int i, Vector2Px gridCoord, Vector2Px imagePos, Vector2Px cellSize, int plateMovementDirection, float elevation)
         {
             base.index = i;
             base.gridCoord = gridCoord;
@@ -56,10 +56,9 @@ namespace Game.Shared.Classes
 
             base.edge = VoronoiEdge.Middle;
 
-            //base.pixels = new Dictionary<int, Dictionary<int, Pixel>>();
-
-            SubPoints = new Dictionary<int, Dictionary<int, IRegionPoint>>();
+            RegionPoints = new Dictionary<int, Dictionary<int, IRegionPoint>>();
             PlateMovementDirection = plateMovementDirection;
+            Elevation = elevation;
         }
 
         public void updatePoint(Vector2Px imagePos, Vector2Px cellSize, int plateMovementDirection)
@@ -73,9 +72,7 @@ namespace Game.Shared.Classes
 
     public class RegionPoint : PointBase, IPointBase, IRegionPoint
     {
-        public Color color { get; set; }
-        public Dictionary<int, Dictionary<int, Pixel>> pixels { get; set; }
-        //---------------
+        public Dictionary<int, Dictionary<int, IPoint>> Points { get; set; }
 
         public RegionPoint() { }
 
@@ -88,8 +85,7 @@ namespace Game.Shared.Classes
 
             base.edge = VoronoiEdge.Middle;
 
-            pixels = new Dictionary<int, Dictionary<int, Pixel>>();
-            //base.SubPoints = new Dictionary<int, Dictionary<int, IPoint>>();
+            Points = new Dictionary<int, Dictionary<int, IPoint>>();
         }
 
         public void updatePoint(Vector2Px imagePos, Vector2Px cellSize)

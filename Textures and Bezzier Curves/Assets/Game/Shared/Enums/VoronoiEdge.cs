@@ -2,12 +2,12 @@ namespace Game.Shared.Enums
 {
     public enum VoronoiEdge
     {
-        Left,
+        //Left,
         Middle,
         Right,
-        InnerLeft,
+        //InnerLeft,
         InnerRight,
-        MiddleLeft,
+        //MiddleLeft,
         MiddleRight
     }
 }
