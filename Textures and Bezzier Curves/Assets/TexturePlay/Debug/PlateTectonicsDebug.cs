@@ -18,17 +18,17 @@ namespace TexturePlay
         [SerializeField]
         private Transform _movedPointsTransform;
 
-        internal void showDebugPoints(Dictionary<VoronoiEdge, List<Point>> edgesPoints)
+        internal void showDebugPoints(Dictionary<VoronoiEdge, List<IPointBase>> edgesPoints)
         {
-            showDebugPoints(edgesPoints[VoronoiEdge.Left], _texturePlayDebugSettings.OuterEdgePoint);
-            showDebugPoints(edgesPoints[VoronoiEdge.InnerLeft], _texturePlayDebugSettings.MiddlePoint, 0.65f);
-            foreach (var kvp in edgesPoints)
-            {
-                showDebugGridPoints(kvp.Value, _texturePlayDebugSettings.GridPoint);
-            }
-            showDebugPoints(edgesPoints[VoronoiEdge.Right], _texturePlayDebugSettings.OuterEdgePoint);
-            showDebugPoints(edgesPoints[VoronoiEdge.InnerRight], _texturePlayDebugSettings.MiddlePoint, 0.65f);
-            showDebugPoints(edgesPoints[VoronoiEdge.Middle], _texturePlayDebugSettings.MiddlePoint, 0.5f);
+            //showDebugPoints(edgesPoints[VoronoiEdge.Left], _texturePlayDebugSettings.OuterEdgePoint);
+            //showDebugPoints(edgesPoints[VoronoiEdge.InnerLeft], _texturePlayDebugSettings.MiddlePoint, 0.65f);
+            //foreach (var kvp in edgesPoints)
+            //{
+            //    showDebugGridPoints(kvp.Value, _texturePlayDebugSettings.GridPoint);
+            //}
+            //showDebugPoints(edgesPoints[VoronoiEdge.Right], _texturePlayDebugSettings.OuterEdgePoint);
+            //showDebugPoints(edgesPoints[VoronoiEdge.InnerRight], _texturePlayDebugSettings.MiddlePoint, 0.65f);
+            //showDebugPoints(edgesPoints[VoronoiEdge.Middle], _texturePlayDebugSettings.MiddlePoint, 0.5f);
         }
 
         private void showDebugPoints(List<Point> edgePoints, Material material, float scaleMultiplier = 0.35f)

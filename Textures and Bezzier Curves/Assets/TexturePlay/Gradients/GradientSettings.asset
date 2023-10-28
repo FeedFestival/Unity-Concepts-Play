@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca17f2f8933774a4380b75386bb9ea5b, type: 3}
+  m_Name: GradientSettings
+  m_EditorClassIdentifier: 
+  texture2D: []
+  Gradients:
+  - Degrees: 0
+    Texture: {fileID: 2800000, guid: c63e02cd4a4081c4b8e8c72720194526, type: 3}
+  - Degrees: 45
+    Texture: {fileID: 2800000, guid: c966d4bd237143949bea03e260b1e347, type: 3}
+  - Degrees: 90
+    Texture: {fileID: 2800000, guid: 608139a9ca1ffc8489b6e4574361efbc, type: 3}
+  - Degrees: 135
+    Texture: {fileID: 2800000, guid: 6cb44c338595aeb48a44a4d56090dd02, type: 3}
+  - Degrees: 180
+    Texture: {fileID: 2800000, guid: 63a6d200034f5a64698fa4fa29a84172, type: 3}
+  - Degrees: 225
+    Texture: {fileID: 2800000, guid: dca8c0a43742c364aa39c273f915faab, type: 3}
+  - Degrees: 270
+    Texture: {fileID: 2800000, guid: 54a6c5c0f513a184595f3581efcf3da9, type: 3}
+  - Degrees: 315
+    Texture: {fileID: 2800000, guid: fe132e98c1532bd42808d3169c6f2793, type: 3}

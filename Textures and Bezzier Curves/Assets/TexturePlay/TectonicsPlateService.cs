@@ -9,7 +9,9 @@ namespace TexturePlay
 {
     public static class TectonicsPlateService
     {
-        internal static void AssignPixelsAndColor(Vector2Int imgSize, Vector2Int gridSize, Vector2Int cellSize, ref Dictionary<int, Dictionary<int, Point>> points)
+        private static readonly int[] _gradients = new int[] { 0, 45, 90, 135, 180, 225, 270, 315 };
+
+        internal static void AssignPixelsAndColor<T>(Vector2Int imgSize, Vector2Int gridSize, Vector2Int cellSize, ref Dictionary<int, Dictionary<int, T>> points)
         {
             for (int x = 0; x < imgSize.x; x++)  // Iterate over the width of the image.
             {
@@ -29,7 +31,7 @@ namespace TexturePlay
                             int Y = gridY + b;  // Calculate the Y index of the neighboring cell.
                             if (X < 0 || Y < 0 || X >= gridSize.x || Y >= gridSize.y) continue;  // Skip if the neighbor cell is out of the grid bounds.
 
-                            float distance = Vector2Int.Distance(new Vector2Int(x, y), points[X][Y].imagePosition);  // Calculate the distance between the current pixel and the point in the neighboring cell.
+                            float distance = Vector2Int.Distance(new Vector2Int(x, y), (points[X][Y] as IPointBase).imagePosition);  // Calculate the distance between the current pixel and the point in the neighboring cell.
                             if (distance < nearestDistance)  // If the calculated distance is less than the current minimum distance.
                             {
                                 nearestDistance = distance;  // Update the minimum distance.
@@ -37,21 +39,17 @@ namespace TexturePlay
                             }
                         }
                     }
-
-                    var color = points[nearestPoint.x][nearestPoint.y].hasDeadPixels
-                        ? Color.black
-                        : points[nearestPoint.x][nearestPoint.y].color;
-
+                    var point = points[nearestPoint.x][nearestPoint.y] as IRegionPoint; // TODO: modify this into IPoint
+                    var color = point.color;
                     var pixel = new Pixel(x, y, color);
-
-                    points[nearestPoint.x][nearestPoint.y].pixels.AddPixel(pixel);
+                    point.pixels.AddPixel(pixel);
                 }
             }
         }
 
-        internal static void ModifyAllPixels(ref Dictionary<int, Dictionary<int, Pixel>> pixels, Color color)
+        internal static void ModifyAllPixels(ref IPoint point, Color color)
         {
-            foreach (var pixelsCols in pixels)
+            foreach (var pixelsCols in point.pixels)
             {
                 foreach (var pixel in pixelsCols.Value)
                 {
@@ -75,7 +73,7 @@ namespace TexturePlay
             }
         }
 
-        internal static Vector2Int GetVoronoiEdgeNewImagePos(VoronoiEdge edge, Point oppositePoint, Point sidePoint, Vector2Int cellSize)
+        internal static Vector2Int GetVoronoiEdgeNewImagePos(VoronoiEdge edge, IPointBase oppositePoint, IPointBase sidePoint, Vector2Int cellSize)
         {
             Vector2Int point;
             switch (edge)
@@ -106,12 +104,11 @@ namespace TexturePlay
             }
         }
 
-        internal static void SetPointOnEdge(Vector2Int gridSize, ref Point point)
+        internal static void SetPointOnEdge(Vector2Int gridSize, ref IPointBase point)
         {
             if (point.gridCoord.x == 0)
             {
                 point.edge = VoronoiEdge.Left;
-                point.hasDeadPixels = true;
             }
             else if (point.gridCoord.x == gridSize.x - 1)
             {
@@ -167,6 +164,60 @@ namespace TexturePlay
                     }
                 }
             }
+        }
+
+        internal static Vector2Int[] GetGradientSquarePixelCoords(IContinentPoint continentPoint)
+        {
+            int sx = int.MaxValue;
+            int sy = int.MaxValue;
+            int bx = int.MinValue;
+            int by = int.MinValue;
+
+            foreach (var subColXKvp in continentPoint.SubPoints)
+            {
+                foreach (var subRowKvp in subColXKvp.Value)
+                {
+                    var rPoint = subRowKvp.Value;
+                    TectonicsPlateService.setMinMax(ref sx, ref sy, ref bx, ref by, ref rPoint);
+                }
+            }
+
+            return new Vector2Int[2] { new Vector2Int(sx, sy), new Vector2Int(bx, by) };
+        }
+
+        //internal static void setMinMax(ref int sx, ref int sy, ref int bx, ref int by, ref Dictionary<int, Dictionary<int, Pixel>> pixels)
+        internal static void setMinMax(ref int sx, ref int sy, ref int bx, ref int by, ref IRegionPoint point)
+        {
+            foreach (var pixelColKvp in point.pixels)
+            {
+                var x = pixelColKvp.Key;
+                if (x < sx)
+                {
+                    sx = x;
+                }
+                if (x > bx)
+                {
+                    bx = x;
+                }
+                foreach (var pixelKvp in pixelColKvp.Value)
+                {
+                    var y = pixelKvp.Key;
+                    if (y < sy)
+                    {
+                        sy = y;
+                    }
+                    if (y > by)
+                    {
+                        by = y;
+                    }
+                }
+            }
+        }
+
+        internal static int GetRandomDegrees()
+        {
+            var randomIndex = UnityEngine.Random.Range(0, _gradients.Length);
+            return _gradients[randomIndex];
         }
     }
 }

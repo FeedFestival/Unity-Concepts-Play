@@ -7,17 +7,17 @@ namespace TexturePlay
 {
     public static class PointsDictionaryExtensions
     {
-        public static Dictionary<VoronoiEdge, List<Point>> GetEdgesPoints(this Dictionary<int, Dictionary<int, Point>> dictionary)
+        public static Dictionary<VoronoiEdge, List<T>> GetEdgesPoints<T>(this Dictionary<int, Dictionary<int, T>> dictionary) where T : IPointBase
         {
-            var voronoiEdges = new Dictionary<VoronoiEdge, List<Point>>()
+            var voronoiEdges = new Dictionary<VoronoiEdge, List<T>>()
             {
-                { VoronoiEdge.Left, new List<Point>() },
-                { VoronoiEdge.Middle, new List<Point>() },
-                { VoronoiEdge.Right, new List<Point>() },
-                { VoronoiEdge.InnerLeft, new List<Point>() },
-                { VoronoiEdge.InnerRight, new List<Point>() },
-                { VoronoiEdge.MiddleLeft, new List<Point>() },
-                { VoronoiEdge.MiddleRight, new List<Point>() }
+                { VoronoiEdge.Left, new List<T>() },
+                { VoronoiEdge.Middle, new List<T>() },
+                { VoronoiEdge.Right, new List<T>() },
+                { VoronoiEdge.InnerLeft, new List<T>() },
+                { VoronoiEdge.InnerRight, new List<T>() },
+                { VoronoiEdge.MiddleLeft, new List<T>() },
+                { VoronoiEdge.MiddleRight, new List<T>() }
             };
             for (int x = 0; x < dictionary.Count; x++)
             {
@@ -29,7 +29,7 @@ namespace TexturePlay
             return voronoiEdges;
         }
 
-        public static int PointsCount(this Dictionary<int, Dictionary<int, Point>> dictionary)
+        public static int PointsCount(this Dictionary<int, Dictionary<int, IPoint>> dictionary)
         {
             int count = 0;
             for (int i = 0; i < dictionary.Count; i++)
@@ -39,22 +39,13 @@ namespace TexturePlay
             return count;
         }
 
-        public static void AddPoint(this Dictionary<int, Dictionary<int, Point>> dictionary, Point value)
+        public static void AddPoint<T>(this Dictionary<int, Dictionary<int, T>> dictionary, T value) where T : IPointBase
         {
             if (!dictionary.ContainsKey(value.gridCoord.x))
             {
-                dictionary.Add(value.gridCoord.x, new Dictionary<int, Point>());
+                dictionary.Add(value.gridCoord.x, new Dictionary<int, T>());
             }
             dictionary[value.gridCoord.x].Add(value.gridCoord.y, value);
-        }
-
-        public static void AddPoint(this Dictionary<int, Dictionary<int, Point>> dictionary, int key1, int key2, Point value)
-        {
-            if (!dictionary.ContainsKey(key1))
-            {
-                dictionary.Add(key1, new Dictionary<int, Point>());
-            }
-            dictionary[key1].Add(key2, value);
         }
 
         public static void AddPixel(this Dictionary<int, Dictionary<int, Pixel>> dictionary, Pixel value)
@@ -64,6 +55,19 @@ namespace TexturePlay
                 dictionary.Add(value.coord.x, new Dictionary<int, Pixel>());
             }
             dictionary[value.coord.x].Add(value.coord.y, value);
+        }
+
+        public static bool ContainsPixelCoords(this Dictionary<int, Dictionary<int, Pixel>> dictionary, int x, int y)
+        {
+            if (dictionary.ContainsKey(x))
+            {
+                if (dictionary[x].ContainsKey(y))
+                {
+                    return true;
+                }
+                return false;
+            }
+            return false;
         }
 
         public static bool ContainsPixel(this Dictionary<int, Dictionary<int, Pixel>> dictionary, Pixel value)
