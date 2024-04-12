@@ -13,16 +13,12 @@ namespace TexturePlay
     {
         [Header("Settings Size(7680, 3840) Resolution(768, 384)")]
         [SerializeField]
-        [ReadOnly]
         private Vector2Int _imgSize;
         [SerializeField]
-        [ReadOnly]
         private Vector2Int _gridProvinceSize;
         [SerializeField]
-        [ReadOnly]
         private Vector2Int _gridRegionSize;
         [SerializeField]
-        [ReadOnly]
         private Vector2Int _gridContinentSize;
         [SerializeField]
         private int _provinceDivider = 40;
@@ -33,7 +29,7 @@ namespace TexturePlay
         [SerializeField]
         private int _sizeMultiplierDivider = 1;
 
-        [Header("Regions")]
+        [Header("Province")]
         [SerializeField]
         private RawImage _provinceImage;
 
@@ -192,12 +188,12 @@ namespace TexturePlay
                 };
             }
 
-            
+
 
 
 
             // THIS IS HOW WE DO IT !!!
-            //_buildTectonicPlates__s.OnNext(0);
+            _buildTectonicPlates__s.OnNext(0);
 
 
 
@@ -259,6 +255,7 @@ namespace TexturePlay
                                         foreach (var pyKvp in pxKvp.Value)
                                         {
                                             var point = pyKvp.Value;
+
                                             var gradientPos = point.imagePosition - bottomLeft;
                                             var pixelPos = new Vector2Int(Mathf.FloorToInt(gradientPos.x * perPixel.x), Mathf.FloorToInt(gradientPos.y * perPixel.y));
                                             ColorHSV color = gradientTexture.GetPixel(pixelPos.x, pixelPos.y);
@@ -282,6 +279,8 @@ namespace TexturePlay
                     regionsTexture.Apply();
                     _regionsImage.gameObject.SetActive(true);
                     _regionsImage.texture = regionsTexture;
+
+                    Debug.Log("_regionsImage ->>>>>>>>>");
 
                     //var testTexture = TectonicsPlateService.AverageOutTexture(_regionsImage.texture as Texture2D, neighborDepth: 4);
                     //testTexture.filterMode = FilterMode.Point;

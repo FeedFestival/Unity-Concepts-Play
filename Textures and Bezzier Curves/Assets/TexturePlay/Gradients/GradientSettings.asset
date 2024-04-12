@@ -9,39 +9,39 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca17f2f8933774a4380b75386bb9ea5b, type: 3}
+  m_Script: {fileID: 11500000, guid: 1cc39db6267f5794f94a201d9761bbd1, type: 3}
   m_Name: GradientSettings
   m_EditorClassIdentifier: 
   Gradients:
   - Degrees: 0
-    Texture: {fileID: 2800000, guid: c63e02cd4a4081c4b8e8c72720194526, type: 3}
-  - Degrees: 45
-    Texture: {fileID: 2800000, guid: c966d4bd237143949bea03e260b1e347, type: 3}
-  - Degrees: 90
-    Texture: {fileID: 2800000, guid: 608139a9ca1ffc8489b6e4574361efbc, type: 3}
-  - Degrees: 135
-    Texture: {fileID: 2800000, guid: 6cb44c338595aeb48a44a4d56090dd02, type: 3}
-  - Degrees: 180
-    Texture: {fileID: 2800000, guid: 63a6d200034f5a64698fa4fa29a84172, type: 3}
-  - Degrees: 225
-    Texture: {fileID: 2800000, guid: dca8c0a43742c364aa39c273f915faab, type: 3}
-  - Degrees: 270
-    Texture: {fileID: 2800000, guid: 54a6c5c0f513a184595f3581efcf3da9, type: 3}
-  - Degrees: 315
-    Texture: {fileID: 2800000, guid: fe132e98c1532bd42808d3169c6f2793, type: 3}
+    Texture: {fileID: 2800000, guid: 200849b7a34bc9b45bddfeb1c56e0078, type: 3}
   - Degrees: 22
-    Texture: {fileID: 2800000, guid: eee826b4328768a44953e1e0d3e6b7df, type: 3}
+    Texture: {fileID: 2800000, guid: 3140c0b2fa7a37446b5ba2e16735c769, type: 3}
+  - Degrees: 45
+    Texture: {fileID: 2800000, guid: 32ce538e7fdb68b40b380562edf3d583, type: 3}
   - Degrees: 67
-    Texture: {fileID: 2800000, guid: 810bdd366b4cf8942a286cbb1abd9365, type: 3}
+    Texture: {fileID: 2800000, guid: ea7aa78b2a124f14b94e0ed11608c6da, type: 3}
+  - Degrees: 90
+    Texture: {fileID: 2800000, guid: db4d4727812ff7944b6c4c3eb9cdf524, type: 3}
   - Degrees: 112
-    Texture: {fileID: 2800000, guid: 2aa2a38fbe4496545b412db2bccbe5d5, type: 3}
+    Texture: {fileID: 2800000, guid: 7830d92817b135b45b21a99969ff12c6, type: 3}
+  - Degrees: 135
+    Texture: {fileID: 2800000, guid: bf12ba38b153b4d49becdf062583a106, type: 3}
   - Degrees: 157
-    Texture: {fileID: 2800000, guid: c683b0452b5cd4344ad4e898ac07f4d5, type: 3}
+    Texture: {fileID: 2800000, guid: c3995442b6558634793eb062d403bcf3, type: 3}
+  - Degrees: 180
+    Texture: {fileID: 2800000, guid: 0ed12d8926c6dac4396d500d90a78329, type: 3}
   - Degrees: 202
-    Texture: {fileID: 2800000, guid: 3561ef0becade5b40bf233a462dc2684, type: 3}
+    Texture: {fileID: 2800000, guid: 557bfa65d74e269439d8aa17bba897a6, type: 3}
+  - Degrees: 225
+    Texture: {fileID: 2800000, guid: a0913c8aab6806f4eb9a11318491f4d7, type: 3}
   - Degrees: 247
-    Texture: {fileID: 2800000, guid: 5b4f444425ef4754b9f63d5829a07b8c, type: 3}
+    Texture: {fileID: 2800000, guid: 43d386aa7216ac54ba6d0de08144c536, type: 3}
+  - Degrees: 270
+    Texture: {fileID: 2800000, guid: 87b978cf9dba24a42bdbaa5c3ea804ff, type: 3}
   - Degrees: 292
-    Texture: {fileID: 2800000, guid: e24e49f490caf12499dddd53325e78a4, type: 3}
+    Texture: {fileID: 2800000, guid: 910518a761c9b0c429d00d1b2c8a600e, type: 3}
+  - Degrees: 315
+    Texture: {fileID: 2800000, guid: 01b23112b812a0743a0d9e9cb0263fb1, type: 3}
   - Degrees: 337
-    Texture: {fileID: 2800000, guid: e0b0c09aa1f76d74f84b1ea823e0b2ce, type: 3}
+    Texture: {fileID: 2800000, guid: 5711b1d288079f84892372184a1755bb, type: 3}
